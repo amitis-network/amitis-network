@@ -118,46 +118,6 @@ nav {
   transform: translateY(-1px);
 }
 
-.btn-connect.connected {
-  background: transparent;
-  color: var(--green);
-  border: 1px solid var(--green-border);
-  font-weight: 600;
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.btn-connect.connected:hover {
-  background: var(--green-dim);
-  transform: translateY(-1px);
-}
-
-.wallet-balance {
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  color: var(--green);
-  padding: 6px 14px;
-  border: 1px solid var(--green-border);
-  border-radius: 50px;
-  display: none;
-  align-items: center;
-  gap: 6px;
-}
-
-.wallet-balance.visible {
-  display: flex;
-}
-
-.wallet-dot {
-  width: 6px;
-  height: 6px;
-  background: var(--green);
-  border-radius: 50%;
-  animation: blink 1.5s ease-in-out infinite;
-}
-
 .btn-dashboard {
   background: transparent;
   color: var(--muted);
@@ -859,144 +819,6 @@ footer {
 }
 
 /* ── MOBILE ── */
-/* ── KEPLR MODAL ── */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.75);
-  backdrop-filter: blur(8px);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.25s;
-}
-
-.modal-overlay.open {
-  opacity: 1;
-  pointer-events: all;
-}
-
-.modal {
-  background: #0e0e1a;
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 24px;
-  padding: 40px;
-  max-width: 480px;
-  width: 90%;
-  transform: translateY(16px);
-  transition: transform 0.25s;
-  position: relative;
-}
-
-.modal-overlay.open .modal {
-  transform: translateY(0);
-}
-
-.modal-logo {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 24px;
-}
-
-.modal h2 {
-  font-family: 'Cabinet Grotesk', sans-serif;
-  font-size: 24px;
-  font-weight: 800;
-  text-align: center;
-  margin-bottom: 12px;
-  letter-spacing: -0.01em;
-}
-
-.modal-sub {
-  font-size: 14px;
-  color: rgba(255,255,255,0.5);
-  text-align: center;
-  line-height: 1.6;
-  margin-bottom: 28px;
-}
-
-.modal-chain-info {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 12px;
-  padding: 16px 20px;
-  margin-bottom: 28px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.modal-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-family: 'DM Mono', monospace;
-  font-size: 12px;
-}
-
-.modal-row-label { color: rgba(255,255,255,0.35); }
-.modal-row-val   { color: rgba(255,255,255,0.85); }
-
-.modal-btns {
-  display: flex;
-  gap: 10px;
-}
-
-.modal-btn-confirm {
-  flex: 1;
-  background: var(--green);
-  color: #000;
-  border: none;
-  padding: 14px;
-  font-family: 'Cabinet Grotesk', sans-serif;
-  font-size: 14px;
-  font-weight: 700;
-  border-radius: 50px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.modal-btn-confirm:hover { background: #6ee79e; }
-
-.modal-btn-cancel {
-  flex: 1;
-  background: transparent;
-  color: rgba(255,255,255,0.4);
-  border: 1px solid rgba(255,255,255,0.1);
-  padding: 14px;
-  font-family: 'Cabinet Grotesk', sans-serif;
-  font-size: 14px;
-  font-weight: 500;
-  border-radius: 50px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.modal-btn-cancel:hover { color: white; border-color: rgba(255,255,255,0.3); }
-
-.modal-close {
-  position: absolute;
-  top: 16px; right: 16px;
-  background: none; border: none;
-  color: rgba(255,255,255,0.3);
-  font-size: 20px;
-  cursor: pointer;
-  line-height: 1;
-  padding: 4px 8px;
-  transition: color 0.2s;
-}
-.modal-close:hover { color: white; }
-
-.modal-status {
-  text-align: center;
-  font-size: 13px;
-  margin-top: 16px;
-  min-height: 20px;
-  color: var(--green);
-  font-family: 'DM Mono', monospace;
-}
-
 @media (max-width: 768px) {
   nav { padding: 16px 20px; }
   .nav-links { display: none; }
@@ -1034,13 +856,11 @@ footer {
     <li><a href="#different">Why Amitis</a></li>
     <li><a href="#petals">Validators</a></li>
     <li><a href="#ecosystem">Ecosystem</a></li>
-    <li><a href="/explorer.html">Explorer</a></li>
-    <li><a href="/whitepaper.pdf" target="_blank">Whitepaper</a></li>
+    <li><a href="https://rpc.amitis.network" target="_blank">RPC</a></li>
   </ul>
   <div class="nav-cta">
-    <a href="/explorer.html" class="btn-dashboard">Explorer ↗</a>
-    <span class="wallet-balance" id="walletBalance"><span class="wallet-dot"></span><span id="balanceText"></span></span>
-    <button class="btn-connect" id="connectBtn" onclick="handleConnectClick()">Connect Wallet</button>
+    <a href="http://10.144.4.50" class="btn-dashboard">Dashboard ↗</a>
+    <button class="btn-connect" onclick="alert('Keplr integration coming soon — chain registry listing pending.')">Connect Wallet</button>
   </div>
 </nav>
 
@@ -1076,7 +896,7 @@ footer {
   </p>
 
   <div class="hero-ctas">
-    <button class="btn-hero-primary" onclick="openKeplrModal()">Connect Wallet</button>
+    <button class="btn-hero-primary" onclick="alert('Keplr integration coming soon.')">Connect Wallet</button>
     <button class="btn-hero-ghost" onclick="document.getElementById('different').scrollIntoView({behavior:'smooth'})">Learn More ↓</button>
   </div>
 
@@ -1259,9 +1079,9 @@ footer {
       <p>Third-party developers can deploy CosmWasm smart contracts on Amitis — their own DEXes, lending protocols, NFT platforms. They get the 80% fee rebate advantage baked in from day one.</p>
     </div>
     <div class="ecosystem-card">
-      <span class="eco-tag">Bridge — In Development</span>
-      <h3>Multi-chain by design</h3>
-      <p>A native multi-chain bridge is in active development — EVM-compatible, lock-and-mint architecture with validator multisig attestation. No external relayer dependency. Ethereum mainnet first, then everywhere.</p>
+      <span class="eco-tag">Native Bridge</span>
+      <h3>Cross-chain by design</h3>
+      <p>The bridge is built into the protocol, not bolted on. Assets move between chains without smart contract risk or centralized custodians. Amitis connects to institutional and retail rails alike.</p>
     </div>
     <div class="ecosystem-card">
       <span class="eco-tag">Open Source</span>
@@ -1286,8 +1106,8 @@ footer {
     <h2 class="cta-h2">Ready to experience crypto<br><em>on your side?</em></h2>
     <p class="cta-sub">Connect your Keplr wallet and join the Amitis Network. Start earning fee rebates on every transaction automatically.</p>
     <div class="cta-btns">
-      <button class="btn-hero-primary" onclick="openKeplrModal()">Connect Wallet</button>
-      <a href="/explorer.html" class="btn-hero-ghost" style="text-decoration:none;display:flex;align-items:center">View Explorer ↗</a>
+      <button class="btn-hero-primary" onclick="alert('Keplr integration coming soon — chain registry listing pending.')">Connect Wallet</button>
+      <a href="http://10.144.4.50" class="btn-hero-ghost" style="text-decoration:none;display:flex;align-items:center">View Dashboard ↗</a>
     </div>
     <div class="cta-chain-info">
       <span class="chain-pill"><span class="chain-dot"></span>Chain ID: amitis-network</span>
@@ -1309,53 +1129,22 @@ footer {
     <span style="font-family:'DM Mono',monospace;font-size:12px;color:rgba(255,255,255,0.3);letter-spacing:0.1em">AMITIS NETWORK</span>
   </div>
   <ul class="footer-links">
-    <li><a href="https://rpc.amitis.network" target="_blank">RPC</a></li>
-    <li><a href="https://rest.amitis.network" target="_blank">REST API</a></li>
-    <li><a href="/explorer.html">Explorer</a></li>
-    <li><a href="/whitepaper.pdf" target="_blank">Whitepaper</a></li>
-    <li><a href="https://github.com/amitis-network" target="_blank">GitHub</a></li>
+    <li><a href="https://rpc.amitis.network">RPC</a></li>
+    <li><a href="https://rest.amitis.network">REST API</a></li>
+    <li><a href="http://10.144.4.50">Dashboard</a></li>
+    <li><a href="https://github.com/amitis-network">GitHub</a></li>
   </ul>
   <span class="footer-copy">© 2026 Amitis Network</span>
 </footer>
 
-<!-- KEPLR MODAL -->
-<div class="modal-overlay" id="keplrModal">
-  <div class="modal">
-    <button class="modal-close" onclick="closeKeplrModal()">✕</button>
-    <div class="modal-logo">
-      <svg width="56" height="56" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="160" cy="160" r="155" fill="#080810"/>
-        <circle cx="160" cy="160" r="155" fill="none" stroke="white" stroke-width="6"/>
-        <text x="160" y="252" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-size="260" font-weight="900" fill="white">A</text>
-        <path d="M248,72 C268,52 288,68 268,88 C258,98 238,92 248,72Z" fill="#4ade80" opacity="0.7"/>
-      </svg>
-    </div>
-    <h2>Add Amitis to Keplr</h2>
-    <p class="modal-sub">This will add the Amitis Network chain to your Keplr wallet. You'll be able to view your AMTS balance, send transactions, and interact with the protocol.</p>
-    <div class="modal-chain-info">
-      <div class="modal-row"><span class="modal-row-label">Chain ID</span><span class="modal-row-val">amitis-network</span></div>
-      <div class="modal-row"><span class="modal-row-label">Native Token</span><span class="modal-row-val">AMTS (uamts)</span></div>
-      <div class="modal-row"><span class="modal-row-label">RPC</span><span class="modal-row-val">rpc.amitis.network</span></div>
-      <div class="modal-row"><span class="modal-row-label">REST</span><span class="modal-row-val">rest.amitis.network</span></div>
-      <div class="modal-row"><span class="modal-row-label">Bech32 Prefix</span><span class="modal-row-val">amitis</span></div>
-    </div>
-    <div class="modal-btns">
-      <button class="modal-btn-confirm" onclick="addToKeplr()">Add to Keplr</button>
-      <button class="modal-btn-cancel" onclick="closeKeplrModal()">Cancel</button>
-    </div>
-    <div class="modal-status" id="keplrStatus"></div>
-  </div>
-</div>
-
 <script>
-const CHAIN_ID = 'amitis-network';
-const REST = 'https://rest.amitis.network';
+// ── AMITIS KEPLR INTEGRATION ──────────────────────────────────────────────
 
-const CHAIN_CONFIG = {
-  chainId: CHAIN_ID,
+const AMITIS_CHAIN = {
+  chainId: 'amitis-network',
   chainName: 'Amitis Network',
   rpc: 'https://rpc.amitis.network',
-  rest: REST,
+  rest: 'https://rest.amitis.network',
   bip44: { coinType: 118 },
   bech32Config: {
     bech32PrefixAccAddr: 'amitis',
@@ -1363,183 +1152,163 @@ const CHAIN_CONFIG = {
     bech32PrefixValAddr: 'amitisvaloper',
     bech32PrefixValPub: 'amitisvaloperpub',
     bech32PrefixConsAddr: 'amitisvalcons',
-    bech32PrefixConsPub: 'amitisvalconspub'
+    bech32PrefixConsPub: 'amitisvalconspub',
   },
-  currencies: [{ coinDenom: 'AMTS', coinMinimalDenom: 'uamts', coinDecimals: 6 }],
+  currencies: [{
+    coinDenom: 'AMTS',
+    coinMinimalDenom: 'uamts',
+    coinDecimals: 6,
+    coinGeckoId: 'amitis-network',
+  }],
   feeCurrencies: [{
     coinDenom: 'AMTS',
     coinMinimalDenom: 'uamts',
     coinDecimals: 6,
-    gasPriceStep: { low: 0.01, average: 0.025, high: 0.04 }
+    coinGeckoId: 'amitis-network',
+    gasPriceStep: { low: 0.01, average: 0.025, high: 0.04 },
   }],
-  stakeCurrency: { coinDenom: 'AMTS', coinMinimalDenom: 'uamts', coinDecimals: 6 },
-  features: ['ibc-transfer', 'cosmwasm']
+  stakeCurrency: {
+    coinDenom: 'AMTS',
+    coinMinimalDenom: 'uamts',
+    coinDecimals: 6,
+    coinGeckoId: 'amitis-network',
+  },
+  features: ['cosmwasm', 'ibc-transfer'],
 };
 
-let connectedAddress = null;
+// State
+let keplrConnected = false;
+let keplrAddress = null;
 
-// ── Modal ──────────────────────────────────────────────────────────────────
-
-function openKeplrModal() {
-  document.getElementById('keplrModal').classList.add('open');
-  document.getElementById('keplrStatus').textContent = '';
-}
-
-function closeKeplrModal() {
-  document.getElementById('keplrModal').classList.remove('open');
-}
-
-document.getElementById('keplrModal').addEventListener('click', function(e) {
-  if (e.target === this) closeKeplrModal();
-});
-
-// ── Connect button click ───────────────────────────────────────────────────
-
-function handleConnectClick() {
-  if (connectedAddress) {
-    // Already connected — show address/copy on click
-    navigator.clipboard.writeText(connectedAddress).catch(() => {});
-    const btn = document.getElementById('connectBtn');
-    const prev = btn.textContent;
-    btn.textContent = 'Copied!';
-    setTimeout(() => { btn.textContent = shortAddr(connectedAddress); }, 1500);
-    return;
-  }
-  openKeplrModal();
-}
-
-// ── Core: suggest + enable + fetch balance ─────────────────────────────────
-
-async function addToKeplr() {
-  const status = document.getElementById('keplrStatus');
-
+async function connectKeplr() {
+  // Check Keplr is installed
   if (!window.keplr) {
-    status.style.color = '#f87171';
-    status.textContent = 'Keplr not detected. Please install the Keplr browser extension or open in Keplr mobile.';
+    showToast('Keplr wallet not found. Install it at keplr.app', 'error');
+    setTimeout(() => window.open('https://keplr.app', '_blank'), 1500);
     return;
   }
 
   try {
-    status.style.color = 'rgba(255,255,255,0.5)';
-    status.textContent = 'Adding Amitis Network…';
+    // Suggest/add the chain
+    await window.keplr.experimentalSuggestChain(AMITIS_CHAIN);
 
-    // 1. Suggest chain (no-op if already added)
-    await window.keplr.experimentalSuggestChain(CHAIN_CONFIG);
+    // Enable the chain
+    await window.keplr.enable('amitis-network');
 
-    // 2. Request permission
-    await window.keplr.enable(CHAIN_ID);
-
-    // 3. Get account
-    const offlineSigner = window.keplr.getOfflineSigner(CHAIN_ID);
+    // Get the offline signer and address
+    const offlineSigner = window.keplr.getOfflineSigner('amitis-network');
     const accounts = await offlineSigner.getAccounts();
-    if (!accounts || accounts.length === 0) throw new Error('No accounts found in Keplr.');
+    keplrAddress = accounts[0].address;
+    keplrConnected = true;
 
-    connectedAddress = accounts[0].address;
+    // Update all connect buttons
+    updateConnectButtons();
+    showToast('Connected: ' + keplrAddress.slice(0, 12) + '...' + keplrAddress.slice(-6), 'success');
 
-    status.style.color = '#4ade80';
-    status.textContent = '✓ Connected — fetching balance…';
-
-    // 4. Fetch balance
-    const balance = await fetchBalance(connectedAddress);
-
-    // 5. Update UI
-    updateConnectedUI(connectedAddress, balance);
-
-    setTimeout(closeKeplrModal, 1200);
-
-  } catch(e) {
-    status.style.color = '#f87171';
-    // Surface meaningful errors
-    if (e.message && e.message.includes('Request rejected')) {
-      status.textContent = 'Connection rejected. Please approve the request in Keplr.';
+  } catch (err) {
+    if (err.message && err.message.includes('rejected')) {
+      showToast('Connection cancelled', 'info');
     } else {
-      status.textContent = e.message || 'Something went wrong. Please try again.';
+      showToast('Connection failed: ' + (err.message || 'Unknown error'), 'error');
+      console.error('Keplr error:', err);
     }
   }
 }
 
-// ── Balance fetch ──────────────────────────────────────────────────────────
+function updateConnectButtons() {
+  const shortAddr = keplrAddress
+    ? keplrAddress.slice(0, 10) + '...' + keplrAddress.slice(-4)
+    : null;
 
-async function fetchBalance(address) {
-  try {
-    const res = await fetch(`${REST}/cosmos/bank/v1beta1/balances/${address}`);
-    if (!res.ok) return null;
-    const data = await res.json();
-    const uamts = (data.balances || []).find(b => b.denom === 'uamts');
-    if (!uamts) return '0 AMTS';
-    const amts = (parseInt(uamts.amount) / 1_000_000).toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 6
-    });
-    return `${amts} AMTS`;
-  } catch {
-    return null;
+  // Nav button
+  const navBtn = document.querySelector('.btn-connect');
+  if (navBtn) {
+    navBtn.textContent = shortAddr || 'Connect Wallet';
+    navBtn.style.background = keplrConnected ? '#6ee79e' : '';
+    navBtn.onclick = keplrConnected ? disconnectKeplr : connectKeplr;
+  }
+
+  // Hero primary button
+  const heroBtn = document.querySelector('.btn-hero-primary');
+  if (heroBtn) {
+    heroBtn.textContent = shortAddr || 'Connect Wallet';
+    heroBtn.onclick = keplrConnected ? disconnectKeplr : connectKeplr;
+  }
+
+  // CTA button
+  const ctaBtn = document.querySelector('.cta-btns .btn-hero-primary');
+  if (ctaBtn) {
+    ctaBtn.textContent = shortAddr || 'Connect Wallet';
+    ctaBtn.onclick = keplrConnected ? disconnectKeplr : connectKeplr;
   }
 }
 
-// ── UI updates ─────────────────────────────────────────────────────────────
-
-function shortAddr(addr) {
-  if (!addr) return '';
-  return addr.slice(0, 10) + '…' + addr.slice(-6);
+function disconnectKeplr() {
+  keplrConnected = false;
+  keplrAddress = null;
+  updateConnectButtons();
+  showToast('Disconnected', 'info');
 }
 
-function updateConnectedUI(address, balance) {
-  const btn = document.getElementById('connectBtn');
-  btn.textContent = shortAddr(address);
-  btn.classList.add('connected');
-  btn.title = address + ' (click to copy)';
+// Toast notification
+function showToast(message, type = 'info') {
+  const existing = document.querySelector('.amitis-toast');
+  if (existing) existing.remove();
 
-  if (balance) {
-    const pill = document.getElementById('walletBalance');
-    const txt = document.getElementById('balanceText');
-    txt.textContent = balance;
-    pill.classList.add('visible');
-  }
+  const colors = {
+    success: '#4ade80',
+    error: '#f87171',
+    info: 'rgba(255,255,255,0.6)',
+  };
 
-  // Update all hero/cta connect buttons to show connected state
-  document.querySelectorAll('.btn-hero-primary[onclick*="openKeplrModal"]').forEach(b => {
-    b.textContent = shortAddr(address);
-    b.style.background = 'transparent';
-    b.style.color = 'var(--green)';
-    b.style.border = '1px solid var(--green-border)';
+  const toast = document.createElement('div');
+  toast.className = 'amitis-toast';
+  toast.textContent = message;
+  toast.style.cssText = `
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0e0e1a;
+    border: 1px solid ${colors[type]};
+    color: ${colors[type]};
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.03em;
+    z-index: 99999;
+    white-space: nowrap;
+    animation: toastIn 0.3s ease;
+  `;
+
+  const style = document.createElement('style');
+  style.textContent = `@keyframes toastIn { from { opacity:0; transform:translateX(-50%) translateY(12px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }`;
+  document.head.appendChild(style);
+
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 4000);
+}
+
+// Wire up buttons on load
+document.addEventListener('DOMContentLoaded', () => {
+  // Nav connect button
+  const navBtn = document.querySelector('.btn-connect');
+  if (navBtn) navBtn.onclick = connectKeplr;
+
+  // Hero primary button
+  const heroBtn = document.querySelector('.btn-hero-primary');
+  if (heroBtn) heroBtn.onclick = connectKeplr;
+
+  // CTA primary button — select only the one inside .cta-btns
+  const ctaBtn = document.querySelector('.cta-btns .btn-hero-primary');
+  if (ctaBtn) ctaBtn.onclick = connectKeplr;
+
+  // Listen for Keplr account changes
+  window.addEventListener('keplr_keystorechange', () => {
+    if (keplrConnected) connectKeplr();
   });
-}
-
-// ── Auto-reconnect on page load ────────────────────────────────────────────
-
-window.addEventListener('load', async () => {
-  if (!window.keplr) return;
-  try {
-    // Try to reconnect silently if already approved
-    await window.keplr.enable(CHAIN_ID);
-    const offlineSigner = window.keplr.getOfflineSigner(CHAIN_ID);
-    const accounts = await offlineSigner.getAccounts();
-    if (accounts && accounts.length > 0) {
-      connectedAddress = accounts[0].address;
-      const balance = await fetchBalance(connectedAddress);
-      updateConnectedUI(connectedAddress, balance);
-    }
-  } catch {
-    // Not previously approved — silent fail, user can connect manually
-  }
-});
-
-// Re-fetch balance when Keplr account changes
-window.addEventListener('keplr_keystorechange', async () => {
-  if (!window.keplr || !connectedAddress) return;
-  try {
-    await window.keplr.enable(CHAIN_ID);
-    const offlineSigner = window.keplr.getOfflineSigner(CHAIN_ID);
-    const accounts = await offlineSigner.getAccounts();
-    if (accounts && accounts.length > 0) {
-      connectedAddress = accounts[0].address;
-      const balance = await fetchBalance(connectedAddress);
-      updateConnectedUI(connectedAddress, balance);
-    }
-  } catch {}
 });
 </script>
-
 </body>
 </html>
