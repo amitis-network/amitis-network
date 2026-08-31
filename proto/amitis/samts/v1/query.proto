@@ -1,0 +1,32 @@
+syntax = "proto3";
+package amitis.samts.v1;
+
+import "google/api/annotations.proto";
+import "amitis/samts/v1/types.proto";
+
+option go_package = "github.com/amitis-network/amitis-network/x/samts/types";
+
+service Query {
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/amitis/samts/v1/params";
+  }
+  rpc PoolSize(QueryPoolSizeRequest) returns (QueryPoolSizeResponse) {
+    option (google.api.http).get = "/amitis/samts/v1/pool";
+  }
+  rpc Position(QueryPositionRequest) returns (QueryPositionResponse) {
+    option (google.api.http).get = "/amitis/samts/v1/position/{validator_address}";
+  }
+}
+
+message QueryParamsRequest {}
+message QueryParamsResponse { Params params = 1; }
+
+message QueryPoolSizeRequest {}
+message QueryPoolSizeResponse {
+  string total_samts    = 1;
+  string available_samts = 2;
+  string max_loan       = 3;
+}
+
+message QueryPositionRequest  { string validator_address = 1; }
+message QueryPositionResponse { ValidatorPosition position = 1; }

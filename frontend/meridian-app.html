@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meridian App — Stablecoin Issuance Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --void:    #04040a;
+  --deep:    #080814;
+  --surface: #0d0d1f;
+  --card:    rgba(255,255,255,0.03);
+  --border:  rgba(255,255,255,0.07);
+  --bhi:     rgba(255,255,255,0.14);
+  --gold:    #c9a84c;
+  --gold-lt: #e8c96a;
+  --gdim:    rgba(201,168,76,0.12);
+  --gbdr:    rgba(201,168,76,0.28);
+  --cream:   #f5f0e8;
+  --white:   #ffffff;
+  --muted:   rgba(245,240,232,0.45);
+  --dimmer:  rgba(245,240,232,0.2);
+  --faint:   rgba(245,240,232,0.07);
+  --green:   #4ade80;
+  --gdim2:   rgba(74,222,128,0.12);
+  --red:     #f87171;
+  --rdim:    rgba(248,113,113,0.12);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--void);color:var(--cream);font-family:'DM Sans',sans-serif;min-height:100vh;line-height:1.5;}
+
+/* ── LAYOUT ── */
+.app-shell{display:grid;grid-template-columns:260px 1fr;min-height:100vh;}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  background:var(--deep);
+  border-right:1px solid var(--border);
+  padding:0;
+  position:sticky;top:0;height:100vh;
+  display:flex;flex-direction:column;
+  overflow-y:auto;
+}
+.sidebar-brand{
+  padding:28px 24px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;
+  text-decoration:none;
+}
+.brand-m{
+  width:34px;height:34px;
+  border:1.5px solid var(--gold);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Playfair Display',serif;font-weight:700;font-size:16px;color:var(--gold);
+  flex-shrink:0;
+}
+.brand-text{font-family:'DM Mono',monospace;font-size:13px;letter-spacing:0.2em;color:var(--cream);text-transform:uppercase;}
+
+.sidebar-section{padding:20px 16px 8px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.2em;color:var(--dimmer);text-transform:uppercase;}
+
+.nav-item{
+  display:flex;align-items:center;gap:12px;
+  padding:11px 16px;margin:2px 8px;
+  border-radius:3px;cursor:pointer;
+  font-size:13px;font-weight:500;color:var(--muted);
+  transition:all 0.15s;border:1px solid transparent;
+}
+.nav-item:hover{background:var(--faint);color:var(--cream);}
+.nav-item.active{background:var(--gdim);border-color:var(--gbdr);color:var(--gold);}
+.nav-item-icon{font-size:15px;width:20px;text-align:center;flex-shrink:0;}
+
+.sidebar-wallet{
+  margin-top:auto;
+  padding:16px;
+  border-top:1px solid var(--border);
+}
+.wallet-card{
+  background:var(--card);border:1px solid var(--border);
+  padding:14px;border-radius:3px;
+}
+.wallet-status{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.wallet-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;}
+.wallet-dot.disconnected{background:var(--dimmer);}
+.wallet-label{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.05em;}
+.wallet-addr{font-family:'DM Mono',monospace;font-size:11px;color:var(--dimmer);word-break:break-all;}
+.btn-connect-wallet{
+  width:100%;background:var(--gdim);border:1px solid var(--gbdr);
+  color:var(--gold);padding:10px;
+  font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;
+  cursor:pointer;border-radius:2px;letter-spacing:0.04em;transition:all 0.2s;margin-top:4px;
+}
+.btn-connect-wallet:hover{background:rgba(201,168,76,0.2);}
+
+/* ── MAIN ── */
+.main{background:var(--void);overflow-y:auto;}
+.topbar{
+  border-bottom:1px solid var(--border);
+  padding:20px 40px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(4,4,10,0.8);
+  backdrop-filter:blur(20px);
+  position:sticky;top:0;z-index:50;
+}
+.topbar-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--gdim);border:1px solid var(--gbdr);
+  color:var(--gold);padding:6px 14px;border-radius:2px;
+  font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;
+}
+.badge-dot{width:5px;height:5px;background:var(--green);border-radius:50%;}
+
+.content{padding:40px;}
+
+/* ── PAGES ── */
+.page{display:none;}
+.page.active{display:block;}
+
+/* ── OVERVIEW ── */
+.overview-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin-bottom:32px;}
+.ov-card{
+  background:var(--surface);border:1px solid var(--border);
+  padding:28px;
+}
+.ov-card.gold{background:var(--gdim);border-color:var(--gbdr);}
+.ov-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+.ov-num{font-family:'Playfair Display',serif;font-size:40px;font-weight:900;color:var(--gold);line-height:1;margin-bottom:4px;}
+.ov-card.gold .ov-num{color:var(--gold-lt);}
+.ov-sub{font-size:12px;color:var(--dimmer);}
+
+.dash-grid{display:grid;grid-template-columns:2fr 1fr;gap:24px;}
+.panel{background:var(--surface);border:1px solid var(--border);padding:28px;}
+.panel h3{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;margin-bottom:20px;}
+
+/* ── STATUS BADGES ── */
+.status-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:4px 10px;border-radius:2px;
+  font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;
+}
+.status-approved{background:var(--gdim2);color:var(--green);}
+.status-pending{background:rgba(251,191,36,0.12);color:#fbbf24;}
+.status-suspended{background:var(--rdim);color:var(--red);}
+
+/* ── TABLE ── */
+.data-table{width:100%;border-collapse:collapse;}
+.data-table th{
+  text-align:left;padding:10px 16px;
+  font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;
+  color:var(--dimmer);border-bottom:1px solid var(--border);
+}
+.data-table td{
+  padding:14px 16px;font-size:13px;color:var(--muted);
+  border-bottom:1px solid var(--faint);
+}
+.data-table tr:hover td{background:var(--faint);color:var(--cream);}
+.data-table td.mono{font-family:'DM Mono',monospace;font-size:12px;}
+.data-table td.gold{color:var(--gold);}
+
+/* ── ISSUE FORM ── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:900px;}
+.form-full{grid-column:1/-1;}
+.form-group{display:flex;flex-direction:column;gap:8px;}
+.form-label{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);}
+.form-input{
+  background:var(--surface);border:1px solid var(--border);
+  color:var(--cream);padding:13px 16px;
+  font-family:'DM Sans',sans-serif;font-size:14px;
+  border-radius:2px;outline:none;transition:border-color 0.2s;
+}
+.form-input:focus{border-color:var(--gbdr);}
+.form-input::placeholder{color:var(--dimmer);}
+.form-select{
+  background:var(--surface);border:1px solid var(--border);
+  color:var(--cream);padding:13px 16px;
+  font-family:'DM Sans',sans-serif;font-size:14px;
+  border-radius:2px;outline:none;cursor:pointer;
+  appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23c9a84c' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 16px center;
+  transition:border-color 0.2s;
+}
+.form-select:focus{border-color:var(--gbdr);}
+.form-hint{font-size:12px;color:var(--dimmer);line-height:1.5;}
+
+.form-section-title{
+  grid-column:1/-1;
+  font-family:'Playfair Display',serif;font-size:18px;font-weight:700;
+  padding-bottom:16px;border-bottom:1px solid var(--border);margin-top:8px;
+}
+
+.btn{
+  padding:14px 32px;font-family:'DM Sans',sans-serif;
+  font-size:14px;font-weight:600;cursor:pointer;border-radius:2px;letter-spacing:0.03em;transition:all 0.2s;border:none;
+}
+.btn-gold{background:var(--gold);color:#000;}
+.btn-gold:hover{background:var(--gold-lt);transform:translateY(-1px);}
+.btn-border{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-border:hover{border-color:var(--bhi);color:var(--cream);}
+.btn-sm{padding:8px 18px;font-size:12px;}
+
+/* ── STEP WIZARD ── */
+.wizard-steps{display:flex;gap:0;margin-bottom:40px;border:1px solid var(--border);}
+.wiz-step{
+  flex:1;padding:16px 20px;text-align:center;
+  border-right:1px solid var(--border);
+  font-size:13px;font-weight:500;color:var(--dimmer);
+  position:relative;transition:all 0.2s;
+}
+.wiz-step:last-child{border-right:none;}
+.wiz-step.done{color:var(--green);background:var(--gdim2);}
+.wiz-step.active{color:var(--gold);background:var(--gdim);}
+.wiz-step-num{font-family:'Playfair Display',serif;font-size:22px;font-weight:900;display:block;line-height:1;margin-bottom:4px;}
+
+/* ── CALLOUT ── */
+.callout{
+  background:var(--gdim);border:1px solid var(--gbdr);
+  padding:20px 24px;border-radius:2px;
+  display:flex;gap:16px;align-items:flex-start;
+  margin-bottom:24px;
+}
+.callout-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+.callout p{font-size:14px;color:var(--muted);line-height:1.6;}
+.callout strong{color:var(--gold);}
+
+/* ── REGISTRY ── */
+.registry-filters{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap;}
+.filter-btn{
+  padding:8px 18px;font-size:12px;font-weight:500;cursor:pointer;
+  border-radius:2px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);transition:all 0.2s;font-family:'DM Mono',monospace;letter-spacing:0.05em;
+}
+.filter-btn.active{background:var(--gdim);border-color:var(--gbdr);color:var(--gold);}
+.filter-btn:hover{border-color:var(--bhi);color:var(--cream);}
+
+.registry-card{
+  background:var(--surface);border:1px solid var(--border);
+  padding:24px 28px;margin-bottom:2px;
+  display:grid;grid-template-columns:auto 1fr auto auto auto;
+  align-items:center;gap:24px;
+  transition:border-color 0.2s;cursor:pointer;
+}
+.registry-card:hover{border-color:var(--gbdr);}
+.rc-symbol{
+  font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:var(--gold);
+  width:56px;text-align:center;
+}
+.rc-name{font-size:15px;font-weight:600;margin-bottom:3px;}
+.rc-issuer{font-family:'DM Mono',monospace;font-size:11px;color:var(--dimmer);}
+.rc-supply{text-align:right;}
+.rc-supply-num{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--cream);}
+.rc-supply-label{font-size:11px;color:var(--dimmer);}
+
+/* ── DETAIL PANEL ── */
+.detail-overlay{
+  display:none;position:fixed;inset:0;z-index:200;
+  background:rgba(4,4,10,0.9);backdrop-filter:blur(12px);
+  align-items:center;justify-content:center;
+}
+.detail-overlay.open{display:flex;}
+.detail-modal{
+  background:var(--surface);border:1px solid var(--border);
+  width:600px;max-height:80vh;overflow-y:auto;
+  padding:40px;position:relative;
+}
+.detail-close{
+  position:absolute;top:16px;right:16px;
+  background:transparent;border:1px solid var(--border);
+  color:var(--muted);width:32px;height:32px;cursor:pointer;
+  border-radius:2px;font-size:16px;transition:all 0.2s;
+}
+.detail-close:hover{border-color:var(--bhi);color:var(--cream);}
+.detail-field{margin-bottom:16px;}
+.detail-field label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--dimmer);display:block;margin-bottom:4px;}
+.detail-field span{font-size:14px;color:var(--muted);word-break:break-all;}
+.detail-field span.mono{font-family:'DM Mono',monospace;font-size:12px;}
+.detail-field span.gold{color:var(--gold);}
+
+/* ── NOTIFICATIONS ── */
+.notif{
+  position:fixed;bottom:24px;right:24px;z-index:999;
+  background:var(--surface);border:1px solid var(--border);
+  padding:16px 20px;max-width:360px;
+  display:flex;gap:12px;align-items:flex-start;
+  transform:translateY(100px);opacity:0;
+  transition:all 0.3s ease;border-radius:2px;
+}
+.notif.show{transform:translateY(0);opacity:1;}
+.notif.success{border-color:rgba(74,222,128,0.3);}
+.notif.error{border-color:rgba(248,113,113,0.3);}
+.notif-icon{font-size:18px;flex-shrink:0;}
+.notif-text{font-size:13px;color:var(--muted);line-height:1.5;}
+.notif-title{color:var(--cream);font-weight:600;margin-bottom:2px;}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <a href="/meridian" class="sidebar-brand">
+    <div class="brand-m">M</div>
+    <span class="brand-text">Meridian</span>
+  </a>
+
+  <span class="sidebar-section">Platform</span>
+  <div class="nav-item active" onclick="showPage('overview', this)">
+    <span class="nav-item-icon">◈</span> Overview
+  </div>
+  <div class="nav-item" onclick="showPage('registry', this)">
+    <span class="nav-item-icon">⊞</span> Registry
+  </div>
+
+  <span class="sidebar-section">Issuer</span>
+  <div class="nav-item" onclick="showPage('issue', this)">
+    <span class="nav-item-icon">✦</span> Issue Stablecoin
+  </div>
+  <div class="nav-item" onclick="showPage('manage', this)">
+    <span class="nav-item-icon">⟳</span> Manage
+  </div>
+  <div class="nav-item" onclick="showPage('kyc', this)">
+    <span class="nav-item-icon">✓</span> KYC Status
+  </div>
+
+  <span class="sidebar-section">Network</span>
+  <div class="nav-item" onclick="window.open('https://amitis.network','_blank')">
+    <span class="nav-item-icon">⬡</span> Amitis Network ↗
+  </div>
+  <div class="nav-item" onclick="window.open('https://app.amitis.network','_blank')">
+    <span class="nav-item-icon">⇌</span> DEX / Swap ↗
+  </div>
+  <div class="nav-item" onclick="window.open('https://amitis.network/explorer.html','_blank')">
+    <span class="nav-item-icon">◎</span> Explorer ↗
+  </div>
+
+  <div class="sidebar-wallet">
+    <div class="wallet-card">
+      <div class="wallet-status">
+        <div class="wallet-dot disconnected" id="wallet-dot"></div>
+        <span class="wallet-label" id="wallet-label">Not Connected</span>
+      </div>
+      <div class="wallet-addr" id="wallet-addr" style="display:none"></div>
+      <button class="btn-connect-wallet" onclick="connectWallet()" id="wallet-btn">Connect Keplr</button>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <span class="topbar-title" id="page-title">Overview</span>
+    <div class="topbar-right">
+      <div class="badge"><span class="badge-dot"></span>Amitis Live</div>
+      <div class="badge" style="background:var(--gdim);border-color:var(--gbdr);">
+        <span style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em" id="block-height">Block —</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ── OVERVIEW ── -->
+    <div class="page active" id="page-overview">
+      <div class="overview-grid">
+        <div class="ov-card gold">
+          <div class="ov-label">Protocol Fee</div>
+          <div class="ov-num" id="ov-fees">$0</div>
+          <div class="ov-sub">lifetime collected</div>
+        </div>
+        <div class="ov-card">
+          <div class="ov-label">Total Issuers</div>
+          <div class="ov-num" id="ov-issuers">—</div>
+          <div class="ov-sub">KYC verified</div>
+        </div>
+        <div class="ov-card">
+          <div class="ov-label">Stablecoins</div>
+          <div class="ov-num" id="ov-coins">—</div>
+          <div class="ov-sub">deployed on Amitis</div>
+        </div>
+        <div class="ov-card">
+          <div class="ov-label">Total Supply</div>
+          <div class="ov-num" id="ov-supply">—</div>
+          <div class="ov-sub">fully reserved</div>
+        </div>
+      </div>
+
+      <div class="dash-grid">
+        <div class="panel">
+          <h3>Recent Deployments</h3>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Symbol</th>
+                <th>Name</th>
+                <th>Peg</th>
+                <th>Reserve</th>
+                <th>Supply</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="recent-deployments">
+              <tr><td colspan="6" style="text-align:center;color:var(--dimmer);padding:32px">Loading registry data...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="panel">
+          <h3>Protocol Rules</h3>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--faint)">
+              <span style="font-size:13px;color:var(--muted)">Mint fee</span>
+              <span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--gold)" id="fee-mint">10bps</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--faint)">
+              <span style="font-size:13px;color:var(--muted)">Burn fee</span>
+              <span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--gold)" id="fee-burn">10bps</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--faint)">
+              <span style="font-size:13px;color:var(--muted)">Transfer fee</span>
+              <span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--green)">Free</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--faint)">
+              <span style="font-size:13px;color:var(--muted)">Deploy fee</span>
+              <span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--green)">Free</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--faint)">
+              <span style="font-size:13px;color:var(--muted)">Reserve requirement</span>
+              <span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--gold)">100%</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0">
+              <span style="font-size:13px;color:var(--muted)">PoR oracle</span>
+              <span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--gold)">Chainlink</span>
+            </div>
+          </div>
+
+          <div style="margin-top:24px">
+            <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--dimmer);margin-bottom:12px">Approved Reserve Assets</div>
+            <div id="approved-assets" style="display:flex;flex-wrap:wrap;gap:6px">
+              <span style="font-family:'DM Mono',monospace;font-size:11px;background:var(--gdim);border:1px solid var(--gbdr);color:var(--gold);padding:4px 10px;border-radius:2px">USD FIAT</span>
+              <span style="font-family:'DM Mono',monospace;font-size:11px;background:var(--gdim);border:1px solid var(--gbdr);color:var(--gold);padding:4px 10px;border-radius:2px">T-BILLS</span>
+              <span style="font-family:'DM Mono',monospace;font-size:11px;background:var(--gdim);border:1px solid var(--gbdr);color:var(--gold);padding:4px 10px;border-radius:2px">USDC</span>
+              <span style="font-family:'DM Mono',monospace;font-size:11px;background:var(--gdim);border:1px solid var(--gbdr);color:var(--gold);padding:4px 10px;border-radius:2px">USDT</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── REGISTRY ── -->
+    <div class="page" id="page-registry">
+      <div class="callout">
+        <span class="callout-icon">◈</span>
+        <p>The Meridian Registry lists every stablecoin deployed through the protocol. All issuers are KYC verified. All reserves are Chainlink-attested. <strong>Every entry here is backed 1:1.</strong></p>
+      </div>
+
+      <div class="registry-filters">
+        <button class="filter-btn active" onclick="filterRegistry('all', this)">All</button>
+        <button class="filter-btn" onclick="filterRegistry('usd', this)">USD Pegged</button>
+        <button class="filter-btn" onclick="filterRegistry('eur', this)">EUR Pegged</button>
+        <button class="filter-btn" onclick="filterRegistry('other', this)">Other</button>
+      </div>
+
+      <div id="registry-list">
+        <div style="text-align:center;padding:60px;color:var(--dimmer)">
+          <div style="font-family:'Playfair Display',serif;font-size:24px;margin-bottom:12px">No stablecoins deployed yet.</div>
+          <div style="font-size:14px">Be the first issuer on Meridian.</div>
+          <button class="btn btn-gold" style="margin-top:24px" onclick="showPage('issue', document.querySelector('.nav-item:nth-child(5)'))">Issue a Stablecoin →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ISSUE ── -->
+    <div class="page" id="page-issue">
+      <div class="wizard-steps">
+        <div class="wiz-step active" id="wiz-1"><span class="wiz-step-num">01</span>Identity</div>
+        <div class="wiz-step" id="wiz-2"><span class="wiz-step-num">02</span>Reserves</div>
+        <div class="wiz-step" id="wiz-3"><span class="wiz-step-num">03</span>Token Config</div>
+        <div class="wiz-step" id="wiz-4"><span class="wiz-step-num">04</span>Deploy</div>
+      </div>
+
+      <!-- Step 1: KYC -->
+      <div id="step-kyc">
+        <h2 style="font-family:'Playfair Display',serif;font-size:28px;font-weight:900;margin-bottom:8px">Identity Verification</h2>
+        <p style="color:var(--muted);margin-bottom:32px">Connect your Keplr wallet and complete KYC. Individuals and businesses both supported.</p>
+
+        <div class="callout">
+          <span class="callout-icon">ℹ</span>
+          <p><strong>Regulations are your responsibility.</strong> Meridian verifies your identity and enforces reserve requirements. Whether your stablecoin requires licensing in your jurisdiction is a legal question for you and your counsel.</p>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Legal Name / Entity Name</label>
+            <input type="text" class="form-input" id="kyc-name" placeholder="Acme Corp LLC or John Smith">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Jurisdiction</label>
+            <input type="text" class="form-input" id="kyc-jurisdiction" placeholder="Texas, USA">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Entity Type</label>
+            <select class="form-select" id="kyc-type">
+              <option value="">Select type</option>
+              <option value="individual">Individual</option>
+              <option value="llc">LLC</option>
+              <option value="corporation">Corporation</option>
+              <option value="trust">Trust / Foundation</option>
+              <option value="bank">Bank / Financial Institution</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-input" id="kyc-email" placeholder="contact@yourcompany.com">
+          </div>
+          <div class="form-full">
+            <label class="form-label">KYC Reference ID</label>
+            <input type="text" class="form-input" id="kyc-ref" placeholder="From Stripe Identity or Persona — paste your verification session ID">
+            <div class="form-hint" style="margin-top:6px">Complete identity verification at <a href="https://verify.meridian.finance" style="color:var(--gold)">verify.meridian.finance</a> and paste your session ID here.</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;margin-top:32px">
+          <button class="btn btn-gold" onclick="submitKYC()">Submit KYC Application →</button>
+        </div>
+      </div>
+
+      <!-- Step 2: Reserves -->
+      <div id="step-reserves" style="display:none">
+        <h2 style="font-family:'Playfair Display',serif;font-size:28px;font-weight:900;margin-bottom:8px">Proof of Reserves</h2>
+        <p style="color:var(--muted);margin-bottom:32px">Configure your reserve attestation. Minting will be disabled until a valid Chainlink PoR feed is linked.</p>
+
+        <div class="callout">
+          <span class="callout-icon">🔗</span>
+          <p><strong>Chainlink Proof of Reserve is required.</strong> Your PoR feed must publish the total reserves backing your stablecoin. Circulating supply can never exceed verified reserves. Set up your feed at <strong>chain.link/proof-of-reserve</strong> before deploying.</p>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Reserve Type</label>
+            <select class="form-select" id="res-type">
+              <option value="USD_FIAT">USD Fiat — bank-held US dollars</option>
+              <option value="T_BILLS">T-Bills — US Treasury bills</option>
+              <option value="USDC">USDC — on-chain USD Coin</option>
+              <option value="USDT">USDT — on-chain Tether</option>
+              <option value="Mixed">Mixed — combination of approved assets</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Custodian / Attestor</label>
+            <input type="text" class="form-input" id="res-custodian" placeholder="e.g. Chase Bank, Silvergate, Fireblocks">
+          </div>
+          <div class="form-full form-group">
+            <label class="form-label">Chainlink PoR Feed URI</label>
+            <input type="text" class="form-input" id="res-uri" placeholder="https://your-por-feed.example.com/reserves">
+            <div class="form-hint" style="margin-top:6px">Must return a JSON feed that Chainlink oracles can verify. Format: <span style="font-family:'DM Mono',monospace;color:var(--gold)">{"total_reserves": "1000000.00", "currency": "USD", "timestamp": 1234567890}</span></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Current Reserve Amount (USD)</label>
+            <input type="number" class="form-input" id="res-amount" placeholder="1000000">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Update Frequency</label>
+            <select class="form-select" id="res-freq">
+              <option value="realtime">Real-time</option>
+              <option value="hourly">Hourly</option>
+              <option value="daily" selected>Daily</option>
+              <option value="weekly">Weekly</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;margin-top:32px">
+          <button class="btn btn-border" onclick="prevStep()">← Back</button>
+          <button class="btn btn-gold" onclick="submitReserves()">Confirm Reserves →</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Token Config -->
+      <div id="step-token" style="display:none">
+        <h2 style="font-family:'Playfair Display',serif;font-size:28px;font-weight:900;margin-bottom:8px">Token Configuration</h2>
+        <p style="color:var(--muted);margin-bottom:32px">Define your stablecoin. These parameters are set at deployment and cannot be changed.</p>
+
+        <div class="form-grid">
+          <div class="form-section-title">Token Identity</div>
+          <div class="form-group">
+            <label class="form-label">Token Name</label>
+            <input type="text" class="form-input" id="tok-name" placeholder="Acme USD Stablecoin">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Token Symbol</label>
+            <input type="text" class="form-input" id="tok-symbol" placeholder="ACUSD" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+            <div class="form-hint">3–8 uppercase characters. Must be unique on Meridian.</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Peg Currency</label>
+            <select class="form-select" id="tok-peg">
+              <option value="USD">USD — US Dollar</option>
+              <option value="EUR">EUR — Euro</option>
+              <option value="GBP">GBP — British Pound</option>
+              <option value="CAD">CAD — Canadian Dollar</option>
+              <option value="AUD">AUD — Australian Dollar</option>
+              <option value="SGD">SGD — Singapore Dollar</option>
+              <option value="AED">AED — UAE Dirham</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Decimals</label>
+            <select class="form-select" id="tok-decimals">
+              <option value="6" selected>6 (standard — matches uamts)</option>
+              <option value="2">2 (cents precision)</option>
+              <option value="8">8 (satoshi precision)</option>
+              <option value="18">18 (wei precision)</option>
+            </select>
+          </div>
+
+          <div class="form-section-title">Access Controls</div>
+          <div class="form-group">
+            <label class="form-label">Whitelist Mode</label>
+            <select class="form-select" id="tok-whitelist">
+              <option value="false">Open — anyone can hold and transfer</option>
+              <option value="true">Whitelisted — only approved addresses</option>
+            </select>
+            <div class="form-hint">Whitelist can be enabled/disabled after deploy. Start open unless you need a closed loop.</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Initial Minter Address</label>
+            <input type="text" class="form-input" id="tok-minter" placeholder="amitis1... (your ops/payroll wallet)">
+            <div class="form-hint">Wallet that can call Mint. You can add more minters after deploy.</div>
+          </div>
+        </div>
+
+        <div style="margin-top:32px;background:var(--surface);border:1px solid var(--border);padding:24px">
+          <div style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--dimmer);margin-bottom:16px">Deployment Preview</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px">
+            <div><span style="color:var(--dimmer)">Name:</span> <span id="prev-name" style="color:var(--cream)">—</span></div>
+            <div><span style="color:var(--dimmer)">Symbol:</span> <span id="prev-symbol" style="color:var(--gold);font-family:'DM Mono',monospace">—</span></div>
+            <div><span style="color:var(--dimmer)">Peg:</span> <span id="prev-peg" style="color:var(--cream)">—</span></div>
+            <div><span style="color:var(--dimmer)">Decimals:</span> <span id="prev-decimals" style="color:var(--cream)">—</span></div>
+            <div><span style="color:var(--dimmer)">Protocol fee:</span> <span style="color:var(--gold)">10bps mint + 10bps burn</span></div>
+            <div><span style="color:var(--dimmer)">Network:</span> <span style="color:var(--cream)">Amitis Network</span></div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;margin-top:32px">
+          <button class="btn btn-border" onclick="prevStep()">← Back</button>
+          <button class="btn btn-gold" onclick="goToStep(4)">Review & Deploy →</button>
+        </div>
+      </div>
+
+      <!-- Step 4: Deploy -->
+      <div id="step-deploy" style="display:none">
+        <h2 style="font-family:'Playfair Display',serif;font-size:28px;font-weight:900;margin-bottom:8px">Deploy Your Stablecoin</h2>
+        <p style="color:var(--muted);margin-bottom:32px">Review everything. Once deployed, core parameters cannot be changed.</p>
+
+        <div class="callout">
+          <span class="callout-icon">⚡</span>
+          <p>This will send a transaction to the Meridian factory contract on Amitis Network. Gas fee: ~150,000 uamts. <strong>Make sure your Keplr wallet is connected and funded.</strong></p>
+        </div>
+
+        <div id="deploy-summary" style="background:var(--surface);border:1px solid var(--border);padding:28px;margin-bottom:28px">
+          <div style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--dimmer);margin-bottom:20px">Deployment Summary</div>
+          <div id="summary-content" style="display:grid;gap:12px;font-size:14px"></div>
+        </div>
+
+        <div style="display:flex;gap:12px">
+          <button class="btn btn-border" onclick="prevStep()">← Back</button>
+          <button class="btn btn-gold" onclick="deployContract()" id="deploy-btn">Deploy Stablecoin →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── MANAGE ── -->
+    <div class="page" id="page-manage">
+      <div id="manage-not-connected" class="callout">
+        <span class="callout-icon">⚠</span>
+        <p>Connect your Keplr wallet to manage your stablecoins.</p>
+      </div>
+
+      <div id="manage-content" style="display:none">
+        <h2 style="font-family:'Playfair Display',serif;font-size:24px;font-weight:700;margin-bottom:24px">Your Stablecoins</h2>
+        <div id="my-stablecoins">
+          <div style="text-align:center;padding:48px;color:var(--dimmer)">No stablecoins deployed yet.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── KYC STATUS ── -->
+    <div class="page" id="page-kyc">
+      <h2 style="font-family:'Playfair Display',serif;font-size:24px;font-weight:700;margin-bottom:24px">KYC / Issuer Status</h2>
+      <div id="kyc-status-panel">
+        <div class="callout">
+          <span class="callout-icon">ℹ</span>
+          <p>Connect your Keplr wallet to check your issuer status on Meridian.</p>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+</div><!-- /app-shell -->
+
+<!-- Detail modal -->
+<div class="detail-overlay" id="detail-overlay" onclick="closeDetail(event)">
+  <div class="detail-modal" id="detail-modal">
+    <button class="detail-close" onclick="closeDetail()">✕</button>
+    <div id="detail-content"></div>
+  </div>
+</div>
+
+<!-- Notification -->
+<div class="notif" id="notif">
+  <span class="notif-icon" id="notif-icon">✓</span>
+  <div class="notif-text">
+    <div class="notif-title" id="notif-title"></div>
+    <div id="notif-body"></div>
+  </div>
+</div>
+
+<script>
+const RPC  = 'https://rpc.amitis.network';
+const REST = 'https://rest.amitis.network';
+const CHAIN_ID = 'amitis-network';
+// Replace with deployed factory address after deployment
+const FACTORY_ADDR = 'MERIDIAN_FACTORY_ADDR';
+
+let walletAddr = null;
+let currentStep = 1;
+let keplr = null;
+
+// ── Wallet ──────────────────────────────────────────────────────────────────
+
+async function connectWallet() {
+  if (!window.keplr) {
+    notify('error', 'Keplr Required', 'Install Keplr wallet extension to continue.');
+    return;
+  }
+  try {
+    await window.keplr.enable(CHAIN_ID);
+    const offlineSigner = window.keplr.getOfflineSigner(CHAIN_ID);
+    const accounts = await offlineSigner.getAccounts();
+    walletAddr = accounts[0].address;
+    keplr = window.keplr;
+
+    document.getElementById('wallet-dot').classList.remove('disconnected');
+    document.getElementById('wallet-label').textContent = 'Connected';
+    document.getElementById('wallet-addr').textContent = walletAddr.slice(0,12)+'...'+walletAddr.slice(-6);
+    document.getElementById('wallet-addr').style.display = 'block';
+    document.getElementById('wallet-btn').textContent = 'Disconnect';
+    document.getElementById('wallet-btn').onclick = disconnectWallet;
+
+    document.getElementById('tok-minter').value = walletAddr;
+    loadIssuerStatus();
+    loadMyStablecoins();
+    notify('success', 'Wallet Connected', walletAddr.slice(0,16)+'...');
+  } catch(e) {
+    notify('error', 'Connection Failed', e.message || 'Could not connect wallet');
+  }
+}
+
+function disconnectWallet() {
+  walletAddr = null;
+  keplr = null;
+  document.getElementById('wallet-dot').classList.add('disconnected');
+  document.getElementById('wallet-label').textContent = 'Not Connected';
+  document.getElementById('wallet-addr').style.display = 'none';
+  document.getElementById('wallet-btn').textContent = 'Connect Keplr';
+  document.getElementById('wallet-btn').onclick = connectWallet;
+}
+
+// ── Navigation ───────────────────────────────────────────────────────────────
+
+function showPage(page, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  if (el) el.classList.add('active');
+
+  const titles = {
+    overview: 'Overview', registry: 'Registry',
+    issue: 'Issue a Stablecoin', manage: 'Manage',
+    kyc: 'KYC Status'
+  };
+  document.getElementById('page-title').textContent = titles[page] || page;
+
+  if (page === 'registry') loadRegistry();
+  if (page === 'manage') {
+    if (walletAddr) { document.getElementById('manage-not-connected').style.display='none'; document.getElementById('manage-content').style.display='block'; }
+    loadMyStablecoins();
+  }
+  if (page === 'kyc') loadIssuerStatus();
+}
+
+// ── Wizard ───────────────────────────────────────────────────────────────────
+
+function goToStep(n) {
+  const steps = ['kyc','reserves','token','deploy'];
+  steps.forEach((s,i) => {
+    document.getElementById('step-'+s).style.display = i+1 === n ? 'block' : 'none';
+    const wiz = document.getElementById('wiz-'+(i+1));
+    wiz.classList.remove('active','done');
+    if (i+1 < n) wiz.classList.add('done');
+    else if (i+1 === n) wiz.classList.add('active');
+  });
+  currentStep = n;
+  updatePreview();
+}
+
+function prevStep() { if (currentStep > 1) goToStep(currentStep - 1); }
+
+function submitKYC() {
+  const name = document.getElementById('kyc-name').value.trim();
+  const jurisdiction = document.getElementById('kyc-jurisdiction').value.trim();
+  const ref = document.getElementById('kyc-ref').value.trim();
+  if (!name || !jurisdiction || !ref) {
+    notify('error', 'Missing Fields', 'Please fill in all required fields.'); return;
+  }
+  if (!walletAddr) {
+    notify('error', 'Wallet Required', 'Connect your Keplr wallet first.'); return;
+  }
+  goToStep(2);
+}
+
+function submitReserves() {
+  const uri = document.getElementById('res-uri').value.trim();
+  if (!uri) {
+    notify('error', 'Reserve URI Required', 'Enter your Chainlink PoR feed URI.'); return;
+  }
+  goToStep(3);
+}
+
+function updatePreview() {
+  const n = document.getElementById('tok-name').value || '—';
+  const s = document.getElementById('tok-symbol').value || '—';
+  const p = document.getElementById('tok-peg').value || '—';
+  const d = document.getElementById('tok-decimals').value || '—';
+  document.getElementById('prev-name').textContent = n;
+  document.getElementById('prev-symbol').textContent = s;
+  document.getElementById('prev-peg').textContent = p;
+  document.getElementById('prev-decimals').textContent = d;
+}
+
+document.getElementById('tok-name').oninput = updatePreview;
+document.getElementById('tok-symbol').oninput = updatePreview;
+document.getElementById('tok-peg').onchange = updatePreview;
+document.getElementById('tok-decimals').onchange = updatePreview;
+
+// ── Deploy ────────────────────────────────────────────────────────────────────
+
+function buildSummary() {
+  const fields = [
+    ['Legal Name', document.getElementById('kyc-name').value],
+    ['Jurisdiction', document.getElementById('kyc-jurisdiction').value],
+    ['Reserve Type', document.getElementById('res-type').value],
+    ['Reserve URI', document.getElementById('res-uri').value],
+    ['Token Name', document.getElementById('tok-name').value],
+    ['Symbol', document.getElementById('tok-symbol').value],
+    ['Peg', document.getElementById('tok-peg').value],
+    ['Decimals', document.getElementById('tok-decimals').value],
+    ['Whitelist', document.getElementById('tok-whitelist').value === 'true' ? 'Enabled' : 'Disabled'],
+    ['Protocol Fee', '10bps mint + 10bps burn (non-removable)'],
+    ['Network', 'Amitis Network'],
+  ];
+  const sc = document.getElementById('summary-content');
+  sc.innerHTML = fields.map(([l,v]) =>
+    `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--faint)">
+      <span style="color:var(--dimmer);font-size:13px">${l}</span>
+      <span style="color:var(--cream);font-size:13px;font-family:'DM Mono',monospace;max-width:320px;word-break:break-all;text-align:right">${v||'—'}</span>
+    </div>`
+  ).join('');
+}
+
+document.getElementById('step-deploy').addEventListener('click', function() {
+  if (currentStep === 4) buildSummary();
+});
+
+// Override goToStep to build summary on step 4
+const _goToStep = goToStep;
+window.goToStep = function(n) {
+  _goToStep(n);
+  if (n === 4) buildSummary();
+}
+
+async function deployContract() {
+  if (!walletAddr || !keplr) {
+    notify('error', 'Wallet Required', 'Connect your Keplr wallet to deploy.'); return;
+  }
+  if (FACTORY_ADDR === 'MERIDIAN_FACTORY_ADDR') {
+    notify('error', 'Factory Not Deployed', 'The Meridian factory contract has not been deployed yet. Check back soon.');
+    return;
+  }
+
+  const btn = document.getElementById('deploy-btn');
+  btn.textContent = 'Deploying...';
+  btn.disabled = true;
+
+  try {
+    const { SigningStargateClient } = await import('https://unpkg.com/@cosmjs/stargate@0.32.0/build/index.js');
+    const signer = keplr.getOfflineSigner(CHAIN_ID);
+    const client = await SigningStargateClient.connectWithSigner(RPC, signer);
+
+    const deployMsg = {
+      deploy_stablecoin: {
+        name: document.getElementById('tok-name').value,
+        symbol: document.getElementById('tok-symbol').value,
+        decimals: parseInt(document.getElementById('tok-decimals').value),
+        peg_currency: document.getElementById('tok-peg').value,
+        reserve_type: document.getElementById('res-type').value,
+        reserve_uri: document.getElementById('res-uri').value,
+        whitelist_enabled: document.getElementById('tok-whitelist').value === 'true',
+        initial_whitelist: [],
+      }
+    };
+
+    // Also register issuer if needed
+    const registerMsg = {
+      register_issuer: {
+        legal_name: document.getElementById('kyc-name').value,
+        jurisdiction: document.getElementById('kyc-jurisdiction').value,
+        kyc_ref: document.getElementById('kyc-ref').value,
+        reserve_type: document.getElementById('res-type').value,
+        reserve_uri: document.getElementById('res-uri').value,
+      }
+    };
+
+    const msg = {
+      typeUrl: '/cosmwasm.wasm.v1.MsgExecuteContract',
+      value: {
+        sender: walletAddr,
+        contract: FACTORY_ADDR,
+        msg: new TextEncoder().encode(JSON.stringify(deployMsg)),
+        funds: [],
+      }
+    };
+
+    const fee = { amount: [{ denom: 'uamts', amount: '150000' }], gas: '500000' };
+    const result = await client.signAndBroadcast(walletAddr, [msg], fee, 'Deploy via Meridian');
+
+    if (result.code === 0) {
+      notify('success', 'Stablecoin Deployed!', 'Your stablecoin is live on Amitis Network.');
+      setTimeout(() => showPage('manage', null), 2000);
+    } else {
+      throw new Error(result.rawLog);
+    }
+  } catch(e) {
+    notify('error', 'Deployment Failed', e.message || 'Transaction failed');
+  } finally {
+    btn.textContent = 'Deploy Stablecoin →';
+    btn.disabled = false;
+  }
+}
+
+// ── Data Loading ──────────────────────────────────────────────────────────────
+
+async function queryContract(addr, msg) {
+  try {
+    const q = btoa(JSON.stringify(msg));
+    const res = await fetch(`${REST}/cosmwasm/wasm/v1/contract/${addr}/smart/${q}`);
+    const data = await res.json();
+    return data.data;
+  } catch(e) { return null; }
+}
+
+async function loadOverview() {
+  // Block height
+  try {
+    const res = await fetch(`${REST}/cosmos/base/tendermint/v1beta1/blocks/latest`);
+    const data = await res.json();
+    const h = data?.block?.header?.height;
+    if (h) document.getElementById('block-height').textContent = 'Block ' + parseInt(h).toLocaleString();
+  } catch(e) {}
+
+  if (FACTORY_ADDR === 'MERIDIAN_FACTORY_ADDR') return;
+
+  const stats = await queryContract(FACTORY_ADDR, {registry_stats:{}});
+  if (stats) {
+    document.getElementById('ov-issuers').textContent = stats.total_issuers || 0;
+    document.getElementById('ov-coins').textContent = stats.total_deployments || 0;
+    const fees = parseInt(stats.total_fees_collected || 0);
+    document.getElementById('ov-fees').textContent = '$' + (fees/1000000).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+  }
+
+  const feeInfo = await queryContract(FACTORY_ADDR, {fee_info:{}});
+  if (feeInfo) {
+    document.getElementById('fee-mint').textContent = feeInfo.mint_fee_bps + 'bps';
+    document.getElementById('fee-burn').textContent = feeInfo.burn_fee_bps + 'bps';
+  }
+
+  loadRecentDeployments();
+}
+
+async function loadRecentDeployments() {
+  const deps = await queryContract(FACTORY_ADDR, {list_deployments:{limit:5}});
+  const tbody = document.getElementById('recent-deployments');
+  if (!deps || deps.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--dimmer);padding:32px">No deployments yet — be the first issuer.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = deps.map(d => `
+    <tr onclick="showDeploymentDetail(${JSON.stringify(d).replace(/"/g,'&quot;')})">
+      <td class="mono gold">${d.symbol}</td>
+      <td>${d.name}</td>
+      <td class="mono">${d.peg_currency}</td>
+      <td class="mono">${d.reserve_type.replace('_',' ')}</td>
+      <td class="mono">${(parseInt(d.circulating_supply)/1e6).toLocaleString()}</td>
+      <td><span class="status-pill ${d.active ? 'status-approved' : 'status-suspended'}">${d.active ? 'Live' : 'Paused'}</span></td>
+    </tr>
+  `).join('');
+}
+
+async function loadRegistry() {
+  const container = document.getElementById('registry-list');
+  if (FACTORY_ADDR === 'MERIDIAN_FACTORY_ADDR') {
+    container.innerHTML = `<div style="text-align:center;padding:60px;color:var(--dimmer)">
+      <div style="font-family:'Playfair Display',serif;font-size:24px;margin-bottom:12px">Factory not yet deployed.</div>
+      <div style="font-size:14px">The Meridian factory contract is being deployed. Check back soon.</div>
+    </div>`;
+    return;
+  }
+
+  const deps = await queryContract(FACTORY_ADDR, {list_deployments:{limit:50}});
+  if (!deps || deps.length === 0) {
+    container.innerHTML = `<div style="text-align:center;padding:60px;color:var(--dimmer)">
+      <div style="font-family:'Playfair Display',serif;font-size:24px;margin-bottom:12px">No stablecoins deployed yet.</div>
+      <div style="font-size:14px;margin-bottom:24px">Be the first issuer on Meridian.</div>
+      <button class="btn btn-gold" onclick="showPage('issue', null)">Issue a Stablecoin →</button>
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = deps.map(d => `
+    <div class="registry-card" onclick="showDeploymentDetail(${JSON.stringify(d).replace(/"/g,'&quot;')})">
+      <div class="rc-symbol">${d.symbol}</div>
+      <div>
+        <div class="rc-name">${d.name}</div>
+        <div class="rc-issuer">${d.issuer.slice(0,20)}...${d.issuer.slice(-6)}</div>
+      </div>
+      <span class="status-pill ${d.active ? 'status-approved' : 'status-suspended'}">${d.active ? 'Live' : 'Paused'}</span>
+      <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--dimmer)">${d.peg_currency} · ${d.reserve_type.replace('_',' ')}</div>
+      <div class="rc-supply">
+        <div class="rc-supply-num">${(parseInt(d.circulating_supply)/1e6).toLocaleString()}</div>
+        <div class="rc-supply-label">${d.symbol} in circulation</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function loadIssuerStatus() {
+  if (!walletAddr) return;
+  const issuer = await queryContract(FACTORY_ADDR, {issuer:{address: walletAddr}});
+  const panel = document.getElementById('kyc-status-panel');
+  if (!issuer) {
+    panel.innerHTML = `<div class="callout">
+      <span class="callout-icon">ℹ</span>
+      <p>No issuer record found for your wallet. <strong>Register as an issuer</strong> to start issuing stablecoins on Meridian.</p>
+    </div>
+    <button class="btn btn-gold" onclick="showPage('issue', null)">Register as Issuer →</button>`;
+    return;
+  }
+  const statusClass = {Approved:'status-approved', Pending:'status-pending', Suspended:'status-suspended', Revoked:'status-suspended'}[issuer.status] || '';
+  panel.innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--border);padding:32px;max-width:600px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+        <h3 style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700">Issuer Profile</h3>
+        <span class="status-pill ${statusClass}">${issuer.status}</span>
+      </div>
+      <div style="display:grid;gap:14px;font-size:14px">
+        <div class="detail-field"><label>Legal Name</label><span>${issuer.legal_name}</span></div>
+        <div class="detail-field"><label>Jurisdiction</label><span>${issuer.jurisdiction}</span></div>
+        <div class="detail-field"><label>Wallet</label><span class="mono">${issuer.address}</span></div>
+        <div class="detail-field"><label>Reserve Type</label><span>${issuer.reserve_type}</span></div>
+        <div class="detail-field"><label>Deployments</label><span>${issuer.deployments}</span></div>
+        <div class="detail-field"><label>Lifetime Minted</label><span class="gold">${(parseInt(issuer.lifetime_minted)/1e6).toLocaleString()} tokens</span></div>
+        <div class="detail-field"><label>Lifetime Fees</label><span class="gold">${(parseInt(issuer.lifetime_fees)/1e6).toLocaleString()} protocol fee</span></div>
+      </div>
+    </div>`;
+}
+
+async function loadMyStablecoins() {
+  if (!walletAddr) return;
+  const deps = await queryContract(FACTORY_ADDR, {list_deployments:{issuer_filter: walletAddr, limit:20}});
+  const container = document.getElementById('my-stablecoins');
+  if (!deps || deps.length === 0) {
+    container.innerHTML = `<div style="text-align:center;padding:48px;color:var(--dimmer)">
+      No stablecoins deployed yet.
+      <div style="margin-top:16px"><button class="btn btn-gold btn-sm" onclick="showPage('issue', null)">Deploy Your First Stablecoin →</button></div>
+    </div>`;
+    return;
+  }
+  container.innerHTML = deps.map(d => `
+    <div style="background:var(--surface);border:1px solid var(--border);padding:24px;margin-bottom:2px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--gold)">${d.symbol}</div>
+        <div style="font-size:13px;color:var(--muted)">${d.name} · ${d.peg_currency}</div>
+        <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--dimmer);margin-top:4px">${d.contract_addr}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-family:'Playfair Display',serif;font-size:28px;font-weight:900;color:var(--cream)">${(parseInt(d.circulating_supply)/1e6).toLocaleString()}</div>
+        <div style="font-size:12px;color:var(--dimmer)">circulating supply</div>
+        <span class="status-pill ${d.active ? 'status-approved' : 'status-suspended'}" style="margin-top:8px;display:inline-flex">${d.active ? 'Live' : 'Paused'}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── Detail modal ──────────────────────────────────────────────────────────────
+
+function showDeploymentDetail(d) {
+  document.getElementById('detail-content').innerHTML = `
+    <div style="margin-bottom:24px">
+      <div style="font-family:'Playfair Display',serif;font-size:32px;font-weight:900;color:var(--gold)">${d.symbol}</div>
+      <div style="font-size:16px;color:var(--muted)">${d.name}</div>
+    </div>
+    <div class="detail-field"><label>Contract Address</label><span class="mono">${d.contract_addr}</span></div>
+    <div class="detail-field"><label>Issuer</label><span class="mono">${d.issuer}</span></div>
+    <div class="detail-field"><label>Peg Currency</label><span>${d.peg_currency}</span></div>
+    <div class="detail-field"><label>Reserve Type</label><span>${d.reserve_type}</span></div>
+    <div class="detail-field"><label>Reserve URI</label><span class="mono">${d.reserve_uri}</span></div>
+    <div class="detail-field"><label>Circulating Supply</label><span class="gold">${(parseInt(d.circulating_supply)/1e6).toLocaleString()} ${d.symbol}</span></div>
+    <div class="detail-field"><label>Lifetime Minted</label><span>${(parseInt(d.lifetime_minted)/1e6).toLocaleString()} ${d.symbol}</span></div>
+    <div class="detail-field"><label>Lifetime Burned</label><span>${(parseInt(d.lifetime_burned)/1e6).toLocaleString()} ${d.symbol}</span></div>
+    <div class="detail-field"><label>Status</label><span class="status-pill ${d.active ? 'status-approved' : 'status-suspended'}">${d.active ? 'Live' : 'Paused'}</span></div>
+    <div style="margin-top:24px">
+      <a href="https://amitis.network/explorer.html?contract=${d.contract_addr}" target="_blank" class="btn btn-border btn-sm">View on Explorer ↗</a>
+    </div>
+  `;
+  document.getElementById('detail-overlay').classList.add('open');
+}
+
+function closeDetail(e) {
+  if (!e || e.target === document.getElementById('detail-overlay')) {
+    document.getElementById('detail-overlay').classList.remove('open');
+  }
+}
+
+// ── Notifications ─────────────────────────────────────────────────────────────
+
+function notify(type, title, body) {
+  const el = document.getElementById('notif');
+  document.getElementById('notif-icon').textContent = type === 'success' ? '✓' : '✗';
+  document.getElementById('notif-title').textContent = title;
+  document.getElementById('notif-body').textContent = body;
+  el.className = `notif ${type}`;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 4000);
+}
+
+function filterRegistry(filter, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  // Filter logic would go here when real data is loaded
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+
+loadOverview();
+setInterval(loadOverview, 15000);
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+[Unit]
+Description=Amitis REST Health Proxy
+After=network.target
+
+[Service]
+User=amitis
+ExecStart=/usr/bin/python3 /home/amitis/rest-proxy.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

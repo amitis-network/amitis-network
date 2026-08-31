@@ -1,0 +1,13 @@
+[Unit]
+Description=Hermes IBC Relayer
+After=network.target
+
+[Service]
+User=amitis
+ExecStart=/usr/local/bin/hermes start
+Restart=always
+RestartSec=10
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,27 @@
+[Unit]
+Description=Meridian Oracle Relayer
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=amitis
+WorkingDirectory=/home/amitis/oracle-relayer
+ExecStart=/usr/bin/node src/index.js
+Restart=always
+RestartSec=15
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=meridian-oracle-relayer
+
+# Environment
+EnvironmentFile=/home/amitis/oracle-relayer/.env
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/home/amitis/oracle-relayer
+
+[Install]
+WantedBy=multi-user.target

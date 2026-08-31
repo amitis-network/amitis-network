@@ -1,0 +1,41 @@
+syntax = "proto3";
+package amitis.petalregistry.v1;
+
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/amitis-network/amitis-network/x/petalregistry/types";
+
+// Petal represents a validator "business" - one of the 21 fixed validators
+message Petal {
+  // Unique identifier (1-21 for the 21 validators)
+  uint64 id = 1;
+
+  // Current owner of this petal business
+  string owner = 2;
+
+  // Validator operator address associated with this petal
+  string validator_address = 3;
+
+  // Total revenue earned by this petal since genesis (in uamts)
+  string lifetime_revenue = 4 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  // Purchase price when this petal was last acquired
+  cosmos.base.v1beta1.Coin purchase_price = 5 [(gogoproto.nullable) = false];
+
+  // Block height when this petal was acquired
+  int64 purchase_height = 6;
+
+  // Timestamp when acquired
+  google.protobuf.Timestamp purchase_time = 7 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+
+  // Human-readable name for this petal (e.g., "Rose", "Lotus")
+  string name = 8;
+
+  // Description or metadata
+  string description = 9;
+}

@@ -1,0 +1,16 @@
+syntax = "proto3";
+package amitis.petalregistry.v1;
+
+import "gogoproto/gogo.proto";
+import "amitis/petalregistry/v1/petal.proto";
+
+option go_package = "github.com/amitis-network/amitis-network/x/petalregistry/types";
+
+// GenesisState defines the petalregistry module's genesis state
+message GenesisState {
+  // List of all petals at genesis
+  repeated Petal petals = 1 [(gogoproto.nullable) = false];
+  
+  // Next petal ID to use (for future expansion beyond 21)
+  uint64 next_petal_id = 2;
+}

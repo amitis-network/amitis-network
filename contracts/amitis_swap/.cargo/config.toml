@@ -1,0 +1,11 @@
+[target.wasm32-unknown-unknown]
+rustflags = [
+  "-C", "link-arg=-s",
+  "-C", "link-arg=--allow-undefined",
+  "-C", "link-arg=--export=instantiate",
+  "-C", "link-arg=--export=execute",
+  "-C", "link-arg=--export=query",
+  "-C", "link-arg=--export=allocate",
+  "-C", "link-arg=--export=deallocate",
+  "-C", "link-arg=--export=interface_version_8",
+]

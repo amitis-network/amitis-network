@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amitis Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #06060f;
+  --bg2: #0d0d1a;
+  --bg3: #131325;
+  --bg4: #1a1a2e;
+  --border: rgba(255,255,255,0.06);
+  --border2: rgba(255,255,255,0.12);
+  --green: #00ff87;
+  --green2: rgba(0,255,135,0.08);
+  --green3: rgba(0,255,135,0.15);
+  --blue: #4d9fff;
+  --blue2: rgba(77,159,255,0.08);
+  --purple: #a855f7;
+  --yellow: #fbbf24;
+  --red: #ef4444;
+  --white: #ffffff;
+  --muted: rgba(255,255,255,0.5);
+  --dim: rgba(255,255,255,0.25);
+  --mono: 'Space Mono', monospace;
+  --sans: 'Space Grotesk', sans-serif;
+}
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--white); font-family: var(--sans); font-size: 14px; line-height: 1.5; overflow-x: hidden; }
+
+/* SCANLINE OVERLAY */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* GRID BG */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: linear-gradient(rgba(0,255,135,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,135,0.02) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* NAV */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: 58px;
+  background: rgba(6,6,15,0.92);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 32px;
+}
+.nav-left { display: flex; align-items: center; gap: 24px; }
+.nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+.nav-logo { width: 28px; height: 28px; }
+.nav-name { font-family: var(--mono); font-size: 13px; font-weight: 700; letter-spacing: 0.15em; color: var(--white); }
+.nav-tag { font-family: var(--mono); font-size: 9px; color: var(--green); background: var(--green2); border: 1px solid rgba(0,255,135,0.2); padding: 3px 10px; border-radius: 3px; letter-spacing: 0.08em; }
+.nav-links { display: flex; gap: 4px; }
+.nav-links a { font-family: var(--mono); font-size: 11px; color: var(--muted); text-decoration: none; padding: 5px 12px; border-radius: 4px; transition: all 0.15s; letter-spacing: 0.05em; }
+.nav-links a:hover, .nav-links a.active { color: var(--white); background: rgba(255,255,255,0.06); }
+.nav-right { display: flex; align-items: center; gap: 16px; }
+.chain-id { font-family: var(--mono); font-size: 10px; color: var(--muted); border: 1px solid var(--border2); padding: 5px 12px; border-radius: 3px; }
+.live-badge { display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 10px; color: var(--green); }
+.pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+
+/* MAIN */
+main { padding-top: 58px; position: relative; z-index: 1; }
+
+/* HERO STATS */
+.hero {
+  background: linear-gradient(180deg, rgba(0,255,135,0.03) 0%, transparent 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 32px;
+}
+.hero-stats {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.stat-box {
+  background: var(--bg2);
+  padding: 20px 20px;
+  position: relative;
+  transition: background 0.2s;
+}
+.stat-box:hover { background: var(--bg3); }
+.stat-box::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--green), transparent);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.stat-box:hover::before { opacity: 1; }
+.stat-label { font-family: var(--mono); font-size: 9px; color: var(--dim); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px; }
+.stat-val { font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--white); line-height: 1; margin-bottom: 4px; }
+.stat-sub { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+.stat-green { color: var(--green); }
+.stat-blue { color: var(--blue); }
+.stat-purple { color: var(--purple); }
+
+/* SEARCH */
+.search-wrap {
+  max-width: 760px;
+  margin: 0 auto 32px;
+}
+.search-bar {
+  display: flex;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.search-bar:focus-within { border-color: var(--green); box-shadow: 0 0 0 1px rgba(0,255,135,0.1); }
+.search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 14px 18px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--white);
+  outline: none;
+}
+.search-input::placeholder { color: var(--dim); }
+.search-btn {
+  background: var(--green);
+  border: none;
+  padding: 0 24px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: #000;
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  transition: all 0.15s;
+}
+.search-btn:hover { background: #33ffaa; }
+.search-hints { display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
+.search-hint { font-family: var(--mono); font-size: 10px; color: var(--dim); cursor: pointer; padding: 3px 10px; border: 1px solid var(--border); border-radius: 3px; transition: all 0.15s; }
+.search-hint:hover { border-color: var(--border2); color: var(--muted); }
+
+/* CONTENT AREA */
+.content { padding: 0 32px 32px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+
+/* PANELS */
+.panel {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.panel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+}
+.panel-title { font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--white); }
+.panel-meta { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+.view-all { font-family: var(--mono); font-size: 10px; color: var(--green); text-decoration: none; letter-spacing: 0.05em; cursor: pointer; background: none; border: none; transition: opacity 0.15s; }
+.view-all:hover { opacity: 0.7; }
+
+/* BLOCK ROWS */
+.block-row {
+  display: grid;
+  grid-template-columns: 90px 1fr 60px 80px 70px;
+  gap: 12px;
+  align-items: center;
+  padding: 11px 18px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+  cursor: pointer;
+}
+.block-row:last-child { border-bottom: none; }
+.block-row:hover { background: var(--bg3); }
+.block-num {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--green);
+}
+.block-hash {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--blue);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.block-txcount {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--white);
+  text-align: center;
+  background: var(--bg4);
+  border: 1px solid var(--border2);
+  border-radius: 3px;
+  padding: 2px 8px;
+}
+.block-age {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  text-align: right;
+}
+.block-validator {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--purple);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* TX ROWS */
+.tx-row {
+  display: grid;
+  grid-template-columns: 24px 1fr 110px 90px 70px;
+  gap: 12px;
+  align-items: center;
+  padding: 11px 18px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+  cursor: pointer;
+}
+.tx-row:last-child { border-bottom: none; }
+.tx-row:hover { background: var(--bg3); }
+.tx-status {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 700;
+}
+.tx-status.ok { background: rgba(0,255,135,0.15); color: var(--green); border: 1px solid rgba(0,255,135,0.3); }
+.tx-status.err { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+.tx-hash { font-family: var(--mono); font-size: 11px; color: var(--blue); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tx-type { font-family: var(--mono); font-size: 10px; color: var(--muted); background: var(--bg4); border: 1px solid var(--border); border-radius: 3px; padding: 2px 8px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tx-block { font-family: var(--mono); font-size: 11px; color: var(--green); text-align: right; }
+.tx-age { font-family: var(--mono); font-size: 10px; color: var(--muted); text-align: right; }
+
+/* MODAL / DETAIL PANE */
+.detail-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 80px 20px 20px;
+  overflow-y: auto;
+}
+.detail-overlay.open { display: flex; }
+.detail-pane {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  width: 100%;
+  max-width: 820px;
+  overflow: hidden;
+  animation: slideUp 0.2s ease;
+}
+@keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+.detail-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+}
+.detail-title { font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: 0.1em; }
+.detail-close {
+  width: 28px; height: 28px; border-radius: 4px;
+  background: var(--bg4); border: 1px solid var(--border2);
+  color: var(--muted); font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.detail-close:hover { border-color: var(--red); color: var(--red); }
+.detail-body { padding: 24px; }
+.detail-row {
+  display: grid; grid-template-columns: 180px 1fr;
+  gap: 12px; padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  align-items: start;
+}
+.detail-row:last-child { border-bottom: none; }
+.detail-key { font-family: var(--mono); font-size: 11px; color: var(--muted); padding-top: 1px; }
+.detail-val { font-family: var(--mono); font-size: 11px; color: var(--white); word-break: break-all; }
+.detail-val.green { color: var(--green); }
+.detail-val.blue { color: var(--blue); }
+.detail-val.red { color: var(--red); }
+.badge { display: inline-block; padding: 3px 10px; border-radius: 3px; font-size: 10px; font-weight: 700; letter-spacing: 0.05em; }
+.badge-green { background: rgba(0,255,135,0.12); color: var(--green); border: 1px solid rgba(0,255,135,0.25); }
+.badge-red { background: rgba(239,68,68,0.12); color: var(--red); border: 1px solid rgba(239,68,68,0.25); }
+.badge-blue { background: rgba(77,159,255,0.12); color: var(--blue); border: 1px solid rgba(77,159,255,0.25); }
+.badge-purple { background: rgba(168,85,247,0.12); color: var(--purple); border: 1px solid rgba(168,85,247,0.25); }
+.copy-btn { background: none; border: none; color: var(--dim); cursor: pointer; font-size: 11px; margin-left: 8px; transition: color 0.15s; vertical-align: middle; }
+.copy-btn:hover { color: var(--green); }
+
+/* SEARCH RESULT */
+.search-result {
+  background: var(--bg2);
+  border: 1px solid var(--green);
+  border-radius: 8px;
+  margin-top: 16px;
+  overflow: hidden;
+  box-shadow: 0 0 24px rgba(0,255,135,0.05);
+}
+.search-result-head {
+  padding: 14px 18px;
+  background: rgba(0,255,135,0.05);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.search-result-type { font-family: var(--mono); font-size: 9px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; }
+.search-result-body { padding: 0; }
+
+/* TABLE VIEW */
+.tab-bar { display: flex; gap: 2px; padding: 14px 18px 0; background: var(--bg3); border-bottom: 1px solid var(--border); }
+.tab { font-family: var(--mono); font-size: 11px; padding: 8px 16px; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; letter-spacing: 0.05em; transition: all 0.15s; }
+.tab.active { color: var(--white); border-bottom-color: var(--green); }
+.tab:hover:not(.active) { color: var(--dim); }
+.table-header {
+  display: flex; align-items: center;
+  padding: 8px 18px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,0.02);
+}
+.table-header span { font-family: var(--mono); font-size: 9px; color: var(--dim); letter-spacing: 0.15em; text-transform: uppercase; }
+
+/* FULL VIEWS */
+.full-view { display: none; }
+.full-view.active { display: block; }
+
+/* ADDRESS VIEW */
+.addr-hero { padding: 24px 32px; border-bottom: 1px solid var(--border); background: var(--bg2); }
+.addr-main { font-family: var(--mono); font-size: 14px; color: var(--white); margin-bottom: 12px; word-break: break-all; }
+.addr-balances { display: flex; gap: 12px; flex-wrap: wrap; }
+.addr-balance { background: var(--bg3); border: 1px solid var(--border2); border-radius: 6px; padding: 12px 16px; }
+.addr-bal-label { font-family: var(--mono); font-size: 9px; color: var(--dim); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; }
+.addr-bal-val { font-family: var(--mono); font-size: 18px; font-weight: 700; color: var(--green); }
+.addr-bal-usd { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+/* LOADING */
+.skeleton { background: linear-gradient(90deg, var(--bg3) 25%, var(--bg4) 50%, var(--bg3) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 3px; }
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+.loading-row { display: flex; align-items: center; justify-content: center; padding: 32px; color: var(--dim); font-family: var(--mono); font-size: 11px; gap: 10px; }
+.spinner { width: 14px; height: 14px; border: 2px solid var(--border2); border-top-color: var(--green); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg)} }
+
+/* REFRESH TICKER */
+.refresh-bar { height: 2px; background: var(--border); position: fixed; top: 58px; left: 0; right: 0; z-index: 99; }
+.refresh-progress { height: 100%; background: var(--green); width: 0%; transition: width 0.1s linear; opacity: 0.6; }
+
+/* EMPTY */
+.empty { padding: 40px; text-align: center; color: var(--dim); font-family: var(--mono); font-size: 11px; }
+
+/* RESPONSIVE */
+@media(max-width:900px) {
+  .hero-stats { grid-template-columns: repeat(3,1fr); }
+  .two-col { grid-template-columns: 1fr; }
+  nav { padding: 0 16px; }
+  .nav-links { display: none; }
+  .content { padding: 0 16px 32px; }
+  .hero { padding: 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-left">
+    <a href="https://amitis.network" class="nav-brand">
+      <svg class="nav-logo" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="160" cy="160" r="155" fill="#06060f"/>
+        <circle cx="160" cy="160" r="155" fill="none" stroke="white" stroke-width="6"/>
+        <text x="160" y="252" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-size="260" font-weight="900" fill="white">A</text>
+        <path d="M248,72 C268,52 288,68 268,88 C258,98 238,92 248,72Z" fill="#00ff87" opacity="0.8"/>
+      </svg>
+      <span class="nav-name">AMITIS</span>
+    </a>
+    <span class="nav-tag">EXPLORER</span>
+    <nav class="nav-links">
+      <a href="#" class="active" onclick="showView('home');return false">Home</a>
+      <a href="#" onclick="showView('blocks');return false">Blocks</a>
+      <a href="#" onclick="showView('txs');return false">Transactions</a>
+      <a href="#" onclick="showView('validators');return false">Validators</a>
+    </nav>
+  </div>
+  <div class="nav-right">
+    <span class="chain-id">amitis-network</span>
+    <div class="live-badge">
+      <div class="pulse"></div>
+      <span id="blockHeight">—</span>
+    </div>
+  </div>
+</nav>
+
+<!-- REFRESH PROGRESS -->
+<div class="refresh-bar"><div class="refresh-progress" id="refreshProgress"></div></div>
+
+<!-- MAIN -->
+<main>
+
+<!-- HERO STATS -->
+<div class="hero" id="heroSection">
+  <div class="hero-stats">
+    <div class="stat-box">
+      <div class="stat-label">Latest Block</div>
+      <div class="stat-val stat-green" id="statBlock">—</div>
+      <div class="stat-sub" id="statBlockTime">—</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Transactions</div>
+      <div class="stat-val" id="statTxs">—</div>
+      <div class="stat-sub">total on-chain</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Validators</div>
+      <div class="stat-val stat-green" id="statVals">7</div>
+      <div class="stat-sub">active / 21 total</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">AMTS Price</div>
+      <div class="stat-val stat-blue">$7.50</div>
+      <div class="stat-sub">oracle anchored</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Supply</div>
+      <div class="stat-val">1B</div>
+      <div class="stat-sub">fixed — no inflation</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Fee Rebate</div>
+      <div class="stat-val stat-green">80%</div>
+      <div class="stat-sub">hardcoded protocol</div>
+    </div>
+  </div>
+</div>
+
+<!-- HOME VIEW -->
+<div id="homeView" class="full-view active">
+  <div class="content" style="padding-top:24px">
+
+    <!-- SEARCH -->
+    <div class="search-wrap">
+      <div class="search-bar">
+        <input class="search-input" id="searchInput" placeholder="Search by block height, transaction hash, or address…" onkeydown="if(event.key==='Enter')doSearch()">
+        <button class="search-btn" onclick="doSearch()">SEARCH</button>
+      </div>
+      <div class="search-hints">
+        <span class="search-hint" onclick="document.getElementById('searchInput').value='';doSearch()">Latest Blocks</span>
+        <span class="search-hint" onclick="prefillSearch('amitis1clgvqc03f8atzn5z00x8jzx9nl4sv4q3dul5lu')">Ecosystem Fund</span>
+        <span class="search-hint" onclick="prefillSearch('amitis1nup5azm3f0j60xvzx0hgxvp0hxta3s435ajq68')">HRB-DEBIT</span>
+        <span class="search-hint" onclick="prefillSearch('amitis1f6jlx7d9y408tlzue7r2qcf79plp549n30yzqjajjud8vm7m4vdspgrfqp')">AmitisSwap</span>
+      </div>
+      <div id="searchResult"></div>
+    </div>
+
+    <!-- TWO COL -->
+    <div class="two-col">
+      <!-- LATEST BLOCKS -->
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-title">Latest Blocks</span>
+          <button class="view-all" onclick="showView('blocks')">View all →</button>
+        </div>
+        <div id="blockList"><div class="loading-row"><div class="spinner"></div>Loading blocks…</div></div>
+      </div>
+
+      <!-- LATEST TXS -->
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-title">Latest Transactions</span>
+          <button class="view-all" onclick="showView('txs')">View all →</button>
+        </div>
+        <div id="txList"><div class="loading-row"><div class="spinner"></div>Loading transactions…</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- BLOCKS VIEW -->
+<div id="blocksView" class="full-view">
+  <div class="content" style="padding-top:24px">
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">All Blocks</span>
+        <span class="panel-meta" id="blocksViewMeta">—</span>
+      </div>
+      <div class="table-header" style="grid-template-columns:90px 1fr 60px 80px 70px;display:grid;gap:12px">
+        <span>Height</span>
+        <span>Hash</span>
+        <span style="text-align:center">Txns</span>
+        <span>Validator</span>
+        <span style="text-align:right">Age</span>
+      </div>
+      <div id="allBlockList"><div class="loading-row"><div class="spinner"></div>Loading…</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- TXS VIEW -->
+<div id="txsView" class="full-view">
+  <div class="content" style="padding-top:24px">
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">Recent Transactions</span>
+        <span class="panel-meta" id="txsViewMeta">—</span>
+      </div>
+      <div class="table-header" style="grid-template-columns:24px 1fr 110px 90px 70px;display:grid;gap:12px">
+        <span></span>
+        <span>Hash</span>
+        <span style="text-align:center">Type</span>
+        <span style="text-align:right">Block</span>
+        <span style="text-align:right">Age</span>
+      </div>
+      <div id="allTxList"><div class="loading-row"><div class="spinner"></div>Loading…</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- VALIDATORS VIEW -->
+<div id="validatorsView" class="full-view">
+  <div class="content" style="padding-top:24px">
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">Active Validators</span>
+        <span class="panel-meta">7 / 21 petals</span>
+      </div>
+      <div id="validatorList"><div class="loading-row"><div class="spinner"></div>Loading…</div></div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<!-- DETAIL MODAL -->
+<div class="detail-overlay" id="detailOverlay" onclick="if(event.target===this)closeDetail()">
+  <div class="detail-pane">
+    <div class="detail-head">
+      <span class="detail-title" id="detailTitle">—</span>
+      <button class="detail-close" onclick="closeDetail()">✕</button>
+    </div>
+    <div class="detail-body" id="detailBody">—</div>
+  </div>
+</div>
+
+<script>
+const REST = 'https://rest.amitis.network';
+const RPC  = 'https://rpc.amitis.network';
+let refreshTimer = null;
+let refreshInterval = 12000;
+let progressTimer = null;
+let currentView = 'home';
+
+// ── UTILS ──────────────────────────────────────────────────────────────────
+
+function shortHash(h, pre=8, suf=6) {
+  if (!h) return '—';
+  return h.slice(0, pre) + '…' + h.slice(-suf);
+}
+
+function timeAgo(iso) {
+  if (!iso) return '—';
+  const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (diff < 60) return Math.floor(diff) + 's ago';
+  if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+  return Math.floor(diff/86400) + 'd ago';
+}
+
+function fmtAMTS(uamts) {
+  const n = parseInt(uamts) / 1e6;
+  if (n >= 1e6) return (n/1e6).toFixed(2) + 'M';
+  if (n >= 1e3) return (n/1e3).toFixed(2) + 'K';
+  return n.toFixed(4);
+}
+
+function txType(tx) {
+  try {
+    const t = tx.tx?.body?.messages?.[0]?.['@type'] || '';
+    const name = t.split('.').pop()?.replace('Msg', '') || 'Tx';
+    const map = {
+      'Send': 'Transfer',
+      'Transfer': 'IBC Transfer',
+      'ExecuteContract': 'Contract',
+      'StoreCode': 'Deploy',
+      'InstantiateContract': 'Instantiate',
+      'Vote': 'Gov Vote',
+      'SubmitProposal': 'Proposal',
+      'Deposit': 'Gov Deposit',
+    };
+    return map[name] || name;
+  } catch { return 'Tx'; }
+}
+
+function copyText(text) {
+  navigator.clipboard.writeText(text).catch(() => {});
+}
+
+function prefillSearch(val) {
+  document.getElementById('searchInput').value = val;
+  doSearch();
+}
+
+// ── VIEW SWITCHING ──────────────────────────────────────────────────────────
+
+function showView(name) {
+  currentView = name;
+  document.querySelectorAll('.full-view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+  document.getElementById(name + 'View')?.classList.add('active');
+  const links = { home: 0, blocks: 1, txs: 2, validators: 3 };
+  const idx = links[name];
+  if (idx !== undefined) {
+    document.querySelectorAll('.nav-links a')[idx]?.classList.add('active');
+  }
+  if (name === 'blocks') loadAllBlocks();
+  if (name === 'txs') loadAllTxs();
+  if (name === 'validators') loadValidators();
+}
+
+// ── DATA LOADING ────────────────────────────────────────────────────────────
+
+async function loadChainStats() {
+  try {
+    const [statusRes, txRes] = await Promise.all([
+      fetch(RPC + '/status').then(r => r.json()),
+      fetch(REST + '/cosmos/tx/v1beta1/txs?order_by=2&pagination.limit=1').then(r => r.json()),
+    ]);
+    const height = statusRes.result?.sync_info?.latest_block_height || '—';
+    document.getElementById('statBlock').textContent = '#' + parseInt(height).toLocaleString();
+    document.getElementById('blockHeight').textContent = '#' + parseInt(height).toLocaleString();
+    const total = txRes.pagination?.total || '—';
+    document.getElementById('statTxs').textContent = parseInt(total).toLocaleString();
+  } catch(e) { console.error(e); }
+}
+
+async function loadHomeBlocks() {
+  try {
+    const statusRes = await fetch(RPC + '/status').then(r => r.json());
+    const latest = parseInt(statusRes.result?.sync_info?.latest_block_height || 0);
+    const blockTime = statusRes.result?.sync_info?.latest_block_time;
+    if (blockTime) document.getElementById('statBlockTime').textContent = timeAgo(blockTime);
+    if (!latest) return;
+    const heights = Array.from({length: 8}, (_,i) => latest - i).filter(h => h > 0);
+    const blocks = await Promise.all(heights.map(h =>
+      fetch(RPC + '/block?height=' + h).then(r => r.json()).catch(() => null)
+    ));
+    const parsed = blocks.filter(Boolean).map(d => ({
+      height: parseInt(d.result?.block?.header?.height || 0),
+      hash: d.result?.block_id?.hash || '',
+      time: d.result?.block?.header?.time || '',
+      txCount: d.result?.block?.data?.txs?.length || 0,
+      proposer: d.result?.block?.header?.proposer_address || '',
+    })).filter(b => b.height > 0);
+
+    const el = document.getElementById('blockList');
+    if (!parsed.length) { el.innerHTML = '<div class="empty">No blocks found</div>'; return; }
+    el.innerHTML = parsed.map(b => `
+      <div class="block-row" onclick="showBlockDetail(${b.height}, '${b.hash}', '${b.time}', ${b.txCount}, '${b.proposer}')">
+        <div class="block-num">#${b.height.toLocaleString()}</div>
+        <div class="block-hash">${shortHash(b.hash, 10, 8)}</div>
+        <div class="block-txcount">${b.txCount}</div>
+        <div class="block-validator">${shortHash(b.proposer, 6, 4)}</div>
+        <div class="block-age">${timeAgo(b.time)}</div>
+      </div>
+    `).join('');
+  } catch(e) { console.error(e); }
+}
+
+async function loadHomeTxs() {
+  try {
+    const res = await fetch(REST + '/cosmos/tx/v1beta1/txs?order_by=2&pagination.limit=12').then(r => r.json());
+    const txs = res.tx_responses || [];
+    const el = document.getElementById('txList');
+    if (!txs.length) { el.innerHTML = '<div class="empty">No transactions yet</div>'; return; }
+    el.innerHTML = txs.map(tx => `
+      <div class="tx-row" onclick="showTxDetail('${tx.txhash}')">
+        <div class="tx-status ${tx.code === 0 ? 'ok' : 'err'}">${tx.code === 0 ? '✓' : '✗'}</div>
+        <div class="tx-hash">${shortHash(tx.txhash, 10, 8)}</div>
+        <div class="tx-type">${txType(tx)}</div>
+        <div class="tx-block">#${parseInt(tx.height).toLocaleString()}</div>
+        <div class="tx-age">${timeAgo(tx.timestamp)}</div>
+      </div>
+    `).join('');
+  } catch(e) { console.error(e); }
+}
+
+async function loadAllBlocks() {
+  const el = document.getElementById('allBlockList');
+  el.innerHTML = '<div class="loading-row"><div class="spinner"></div>Loading blocks…</div>';
+  try {
+    const statusRes = await fetch(RPC + '/status').then(r => r.json());
+    const latest = parseInt(statusRes.result?.sync_info?.latest_block_height || 0);
+    document.getElementById('blocksViewMeta').textContent = 'Latest: #' + latest.toLocaleString();
+    const heights = Array.from({length: 25}, (_,i) => latest - i).filter(h => h > 0);
+    const blocks = await Promise.all(heights.map(h =>
+      fetch(RPC + '/block?height=' + h).then(r => r.json()).catch(() => null)
+    ));
+    const parsed = blocks.filter(Boolean).map(d => ({
+      height: parseInt(d.result?.block?.header?.height || 0),
+      hash: d.result?.block_id?.hash || '',
+      time: d.result?.block?.header?.time || '',
+      txCount: d.result?.block?.data?.txs?.length || 0,
+      proposer: d.result?.block?.header?.proposer_address || '',
+    })).filter(b => b.height > 0);
+    el.innerHTML = parsed.map(b => `
+      <div class="block-row" onclick="showBlockDetail(${b.height},'${b.hash}','${b.time}',${b.txCount},'${b.proposer}')">
+        <div class="block-num">#${b.height.toLocaleString()}</div>
+        <div class="block-hash">${shortHash(b.hash,12,10)}</div>
+        <div class="block-txcount">${b.txCount}</div>
+        <div class="block-validator">${shortHash(b.proposer,8,6)}</div>
+        <div class="block-age">${timeAgo(b.time)}</div>
+      </div>
+    `).join('');
+  } catch(e) { el.innerHTML = '<div class="empty">Error loading blocks</div>'; }
+}
+
+async function loadAllTxs() {
+  const el = document.getElementById('allTxList');
+  el.innerHTML = '<div class="loading-row"><div class="spinner"></div>Loading transactions…</div>';
+  try {
+    const res = await fetch(REST + '/cosmos/tx/v1beta1/txs?order_by=2&pagination.limit=50').then(r => r.json());
+    const txs = res.tx_responses || [];
+    document.getElementById('txsViewMeta').textContent = (res.pagination?.total || '—') + ' total';
+    if (!txs.length) { el.innerHTML = '<div class="empty">No transactions yet</div>'; return; }
+    el.innerHTML = txs.map(tx => `
+      <div class="tx-row" onclick="showTxDetail('${tx.txhash}')">
+        <div class="tx-status ${tx.code===0?'ok':'err'}">${tx.code===0?'✓':'✗'}</div>
+        <div class="tx-hash">${shortHash(tx.txhash,12,10)}</div>
+        <div class="tx-type">${txType(tx)}</div>
+        <div class="tx-block">#${parseInt(tx.height).toLocaleString()}</div>
+        <div class="tx-age">${timeAgo(tx.timestamp)}</div>
+      </div>
+    `).join('');
+  } catch(e) { el.innerHTML = '<div class="empty">Error loading transactions</div>'; }
+}
+
+async function loadValidators() {
+  const el = document.getElementById('validatorList');
+  el.innerHTML = '<div class="loading-row"><div class="spinner"></div>Loading…</div>';
+  try {
+    const res = await fetch(REST + '/cosmos/staking/v1beta1/validators?status=BOND_STATUS_BONDED&pagination.limit=21').then(r => r.json());
+    const vals = res.validators || [];
+    if (!vals.length) { el.innerHTML = '<div class="empty">No validators found</div>'; return; }
+    el.innerHTML = `
+      <div style="display:grid;grid-template-columns:40px 1fr 140px 120px 100px;gap:12px;padding:8px 18px;border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02)">
+        ${['#','Moniker','Commission','Tokens','Status'].map(h => `<span style="font-family:var(--mono);font-size:9px;color:var(--dim);letter-spacing:.15em;text-transform:uppercase">${h}</span>`).join('')}
+      </div>
+      ${vals.map((v, i) => `
+        <div style="display:grid;grid-template-columns:40px 1fr 140px 120px 100px;gap:12px;align-items:center;padding:13px 18px;border-bottom:1px solid var(--border);transition:background .15s;cursor:pointer" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
+          <div style="font-family:var(--mono);font-size:11px;color:var(--dim)">${i+1}</div>
+          <div>
+            <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--white)">${v.description?.moniker || 'Unknown'}</div>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px">${shortHash(v.operator_address,14,6)}</div>
+          </div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--yellow)">${(parseFloat(v.commission?.commission_rates?.rate||0)*100).toFixed(2)}%</div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--green)">${fmtAMTS(v.tokens)} AMTS</div>
+          <div><span class="badge badge-green">Active</span></div>
+        </div>
+      `).join('')}
+    `;
+  } catch(e) { el.innerHTML = '<div class="empty">Error loading validators</div>'; }
+}
+
+// ── DETAIL MODALS ────────────────────────────────────────────────────────────
+
+function showBlockDetail(height, hash, time, txCount, proposer) {
+  document.getElementById('detailTitle').textContent = 'BLOCK #' + parseInt(height).toLocaleString();
+  document.getElementById('detailBody').innerHTML = `
+    <div class="detail-row"><div class="detail-key">Height</div><div class="detail-val green">#${parseInt(height).toLocaleString()}</div></div>
+    <div class="detail-row"><div class="detail-key">Block Hash</div><div class="detail-val">${hash} <button class="copy-btn" onclick="copyText('${hash}')">⎘</button></div></div>
+    <div class="detail-row"><div class="detail-key">Timestamp</div><div class="detail-val">${new Date(time).toLocaleString()}</div></div>
+    <div class="detail-row"><div class="detail-key">Transactions</div><div class="detail-val">${txCount} transaction${txCount !== 1 ? 's' : ''}</div></div>
+    <div class="detail-row"><div class="detail-key">Proposer</div><div class="detail-val blue">${proposer} <button class="copy-btn" onclick="copyText('${proposer}')">⎘</button></div></div>
+    <div class="detail-row"><div class="detail-key">Chain</div><div class="detail-val">amitis-network</div></div>
+  `;
+  document.getElementById('detailOverlay').classList.add('open');
+}
+
+async function showTxDetail(hash) {
+  document.getElementById('detailTitle').textContent = 'TRANSACTION';
+  document.getElementById('detailBody').innerHTML = '<div class="loading-row"><div class="spinner"></div>Loading transaction…</div>';
+  document.getElementById('detailOverlay').classList.add('open');
+  try {
+    const res = await fetch(REST + '/cosmos/tx/v1beta1/txs/' + hash).then(r => r.json());
+    const tx = res.tx_response;
+    if (!tx) { document.getElementById('detailBody').innerHTML = '<div class="empty">Transaction not found</div>'; return; }
+    const msgs = tx.tx?.body?.messages || [];
+    const msgType = msgs[0]?.['@type']?.split('.').pop()?.replace('Msg','') || '—';
+    let fromTo = '';
+    if (msgs[0]?.from_address) fromTo = `
+      <div class="detail-row"><div class="detail-key">From</div><div class="detail-val"><a href="#" onclick="searchAddress('${msgs[0].from_address}');return false" style="color:var(--blue)">${msgs[0].from_address}</a> <button class="copy-btn" onclick="copyText('${msgs[0].from_address}')">⎘</button></div></div>
+      <div class="detail-row"><div class="detail-key">To</div><div class="detail-val"><a href="#" onclick="searchAddress('${msgs[0].to_address}');return false" style="color:var(--blue)">${msgs[0].to_address}</a> <button class="copy-btn" onclick="copyText('${msgs[0].to_address}')">⎘</button></div></div>
+    `;
+    let amount = '';
+    if (msgs[0]?.amount) {
+      const amts = Array.isArray(msgs[0].amount) ? msgs[0].amount : [msgs[0].amount];
+      amount = `<div class="detail-row"><div class="detail-key">Amount</div><div class="detail-val green">${amts.map(a => a.denom === 'uamts' ? fmtAMTS(a.amount) + ' AMTS' : a.amount + ' ' + a.denom).join(', ')}</div></div>`;
+    }
+    document.getElementById('detailBody').innerHTML = `
+      <div class="detail-row"><div class="detail-key">Hash</div><div class="detail-val">${hash} <button class="copy-btn" onclick="copyText('${hash}')">⎘</button></div></div>
+      <div class="detail-row"><div class="detail-key">Status</div><div class="detail-val">${tx.code === 0 ? '<span class="badge badge-green">SUCCESS</span>' : '<span class="badge badge-red">FAILED (' + tx.code + ')</span>'}</div></div>
+      <div class="detail-row"><div class="detail-key">Block</div><div class="detail-val green">#${parseInt(tx.height).toLocaleString()}</div></div>
+      <div class="detail-row"><div class="detail-key">Timestamp</div><div class="detail-val">${new Date(tx.timestamp).toLocaleString()}</div></div>
+      <div class="detail-row"><div class="detail-key">Type</div><div class="detail-val"><span class="badge badge-blue">${msgType}</span></div></div>
+      ${fromTo}
+      ${amount}
+      <div class="detail-row"><div class="detail-key">Gas Used / Wanted</div><div class="detail-val">${parseInt(tx.gas_used).toLocaleString()} / ${parseInt(tx.gas_wanted).toLocaleString()}</div></div>
+      <div class="detail-row"><div class="detail-key">Fee</div><div class="detail-val">${(tx.tx?.auth_info?.fee?.amount || []).map(a => a.denom === 'uamts' ? fmtAMTS(a.amount) + ' AMTS' : a.amount + ' ' + a.denom).join(', ') || '—'}</div></div>
+      <div class="detail-row"><div class="detail-key">Memo</div><div class="detail-val" style="color:var(--muted)">${tx.tx?.body?.memo || '(none)'}</div></div>
+    `;
+  } catch(e) { document.getElementById('detailBody').innerHTML = '<div class="empty">Error loading transaction</div>'; }
+}
+
+async function showAddressDetail(address) {
+  document.getElementById('detailTitle').textContent = 'ADDRESS';
+  document.getElementById('detailBody').innerHTML = '<div class="loading-row"><div class="spinner"></div>Loading address…</div>';
+  document.getElementById('detailOverlay').classList.add('open');
+  try {
+    const [balRes, txRes] = await Promise.all([
+      fetch(REST + '/cosmos/bank/v1beta1/balances/' + address).then(r => r.json()),
+      fetch(REST + '/cosmos/tx/v1beta1/txs?events=message.sender%3D%27' + address + '%27&order_by=2&pagination.limit=10').then(r => r.json()).catch(() => ({tx_responses:[]})),
+    ]);
+    const bals = balRes.balances || [];
+    const txs = txRes.tx_responses || [];
+    const amtsBal = bals.find(b => b.denom === 'uamts');
+    const amtsAmt = amtsBal ? parseFloat(amtsBal.amount) / 1e6 : 0;
+    const recentTxs = txs.length ? `
+      <div style="margin-top:16px">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--dim);letter-spacing:.15em;text-transform:uppercase;margin-bottom:8px">Recent Transactions</div>
+        ${txs.map(tx => `
+          <div style="display:grid;grid-template-columns:20px 1fr 90px;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);align-items:center;cursor:pointer" onclick="closeDetail();setTimeout(()=>showTxDetail('${tx.txhash}'),100)">
+            <div class="tx-status ${tx.code===0?'ok':'err'}" style="width:16px;height:16px;font-size:8px">${tx.code===0?'✓':'✗'}</div>
+            <div style="font-family:var(--mono);font-size:11px;color:var(--blue)">${shortHash(tx.txhash,10,8)}</div>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:right">${timeAgo(tx.timestamp)}</div>
+          </div>
+        `).join('')}
+      </div>
+    ` : '';
+    document.getElementById('detailBody').innerHTML = `
+      <div class="detail-row"><div class="detail-key">Address</div><div class="detail-val">${address} <button class="copy-btn" onclick="copyText('${address}')">⎘</button></div></div>
+      <div class="detail-row"><div class="detail-key">AMTS Balance</div><div class="detail-val green">${amtsAmt.toLocaleString(undefined,{maximumFractionDigits:6})} AMTS <span style="color:var(--muted);font-size:10px">≈ $${(amtsAmt * 7.5).toLocaleString(undefined,{maximumFractionDigits:2})}</span></div></div>
+      ${bals.filter(b => b.denom !== 'uamts').map(b => `<div class="detail-row"><div class="detail-key">${b.denom.slice(0,20)}…</div><div class="detail-val">${parseInt(b.amount).toLocaleString()}</div></div>`).join('')}
+      ${recentTxs}
+    `;
+  } catch(e) { document.getElementById('detailBody').innerHTML = '<div class="empty">Error loading address</div>'; }
+}
+
+function closeDetail() {
+  document.getElementById('detailOverlay').classList.remove('open');
+}
+
+// ── SEARCH ───────────────────────────────────────────────────────────────────
+
+function searchAddress(addr) {
+  closeDetail();
+  document.getElementById('searchInput').value = addr;
+  setTimeout(doSearch, 100);
+}
+
+async function doSearch() {
+  const q = document.getElementById('searchInput').value.trim();
+  const el = document.getElementById('searchResult');
+  if (!q) { el.innerHTML = ''; return; }
+  el.innerHTML = '<div class="loading-row"><div class="spinner"></div>Searching…</div>';
+
+  try {
+    // Block height
+    if (/^\d+$/.test(q)) {
+      const res = await fetch(RPC + '/block?height=' + q).then(r => r.json());
+      if (res.result?.block) {
+        const b = res.result;
+        showBlockDetail(
+          b.block.header.height,
+          b.block_id?.hash,
+          b.block.header.time,
+          b.block.data?.txs?.length || 0,
+          b.block.header.proposer_address
+        );
+        el.innerHTML = '';
+        return;
+      }
+    }
+
+    // Tx hash (64 hex chars)
+    if (/^[0-9A-Fa-f]{64}$/.test(q)) {
+      showTxDetail(q.toUpperCase());
+      el.innerHTML = '';
+      return;
+    }
+
+    // Address
+    if (q.startsWith('amitis1')) {
+      showAddressDetail(q);
+      el.innerHTML = '';
+      return;
+    }
+
+    el.innerHTML = `<div style="padding:16px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;margin-top:12px;font-family:var(--mono);font-size:11px;color:var(--muted)">No results found for "${q}"</div>`;
+  } catch(e) {
+    el.innerHTML = `<div style="padding:16px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;margin-top:12px;font-family:var(--mono);font-size:11px;color:var(--red)">Search error — check connection</div>`;
+  }
+}
+
+// ── AUTO REFRESH ─────────────────────────────────────────────────────────────
+
+function startRefreshProgress() {
+  let pct = 0;
+  const prog = document.getElementById('refreshProgress');
+  clearInterval(progressTimer);
+  prog.style.width = '0%';
+  progressTimer = setInterval(() => {
+    pct += (100 / (refreshInterval / 200));
+    if (pct >= 100) pct = 100;
+    prog.style.width = pct + '%';
+  }, 200);
+}
+
+async function refresh() {
+  startRefreshProgress();
+  await loadChainStats();
+  if (currentView === 'home') {
+    await Promise.all([loadHomeBlocks(), loadHomeTxs()]);
+  } else if (currentView === 'blocks') {
+    await loadAllBlocks();
+  } else if (currentView === 'txs') {
+    await loadAllTxs();
+  }
+  clearInterval(progressTimer);
+  document.getElementById('refreshProgress').style.width = '100%';
+  setTimeout(() => { document.getElementById('refreshProgress').style.width = '0%'; }, 300);
+}
+
+function startAutoRefresh() {
+  refresh();
+  refreshTimer = setInterval(refresh, refreshInterval);
+}
+
+// ── KEYBOARD ─────────────────────────────────────────────────────────────────
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeDetail();
+  if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+    e.preventDefault();
+    document.getElementById('searchInput').focus();
+  }
+});
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+
+startAutoRefresh();
+</script>
+</body>
+</html>

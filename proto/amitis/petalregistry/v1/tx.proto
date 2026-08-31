@@ -1,0 +1,46 @@
+syntax = "proto3";
+package amitis.petalregistry.v1;
+
+import "cosmos/msg/v1/msg.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/amitis-network/amitis-network/x/petalregistry/types";
+
+// Msg defines the petalregistry Msg service
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // UpdatePetalMetadata allows the owner to update petal name/description
+  rpc UpdatePetalMetadata(MsgUpdatePetalMetadata) returns (MsgUpdatePetalMetadataResponse);
+
+  // TransferPetal transfers ownership of a petal to a new address
+  rpc TransferPetal(MsgTransferPetal) returns (MsgTransferPetalResponse);
+}
+
+// MsgUpdatePetalMetadata updates a petal's metadata
+message MsgUpdatePetalMetadata {
+  option (cosmos.msg.v1.signer) = "owner";
+
+  string owner = 1;
+  uint64 petal_id = 2;
+  string name = 3;
+  string description = 4;
+}
+
+// MsgUpdatePetalMetadataResponse defines the response
+message MsgUpdatePetalMetadataResponse {}
+
+// MsgTransferPetal transfers ownership of a petal to a new address
+message MsgTransferPetal {
+  option (cosmos.msg.v1.signer) = "owner";
+
+  string owner     = 1;
+  uint64 petal_id  = 2;
+  string new_owner = 3;
+}
+
+// MsgTransferPetalResponse defines the response
+message MsgTransferPetalResponse {
+  uint64 petal_id  = 1;
+  string new_owner = 2;
+}

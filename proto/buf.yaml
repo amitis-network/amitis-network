@@ -1,0 +1,13 @@
+version: v1
+name: buf.build/amitis-network/amitis-network
+deps:
+  - buf.build/googleapis/googleapis
+  - buf.build/cosmos/cosmos-sdk
+  - buf.build/cosmos/gogo-proto
+  - buf.build/protocolbuffers/wellknowntypes
+breaking:
+  use:
+    - FILE
+lint:
+  use:
+    - DEFAULT

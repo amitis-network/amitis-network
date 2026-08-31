@@ -1,0 +1,68 @@
+syntax = "proto3";
+package amitis.amitisdex.v1;
+
+import "cosmos/msg/v1/msg.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/amitis-network/amitis-network/x/amitisdex/types";
+
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  rpc CreatePool(MsgCreatePool) returns (MsgCreatePoolResponse);
+  rpc AddLiquidity(MsgAddLiquidity) returns (MsgAddLiquidityResponse);
+  rpc RemoveLiquidity(MsgRemoveLiquidity) returns (MsgRemoveLiquidityResponse);
+  rpc SwapExactIn(MsgSwapExactIn) returns (MsgSwapExactInResponse);
+}
+
+message MsgCreatePool {
+  option (cosmos.msg.v1.signer) = "creator";
+  string creator  = 1;
+  string denom_a  = 2;
+  string denom_b  = 3;
+  string amount_a = 4;
+  string amount_b = 5;
+}
+
+message MsgCreatePoolResponse {
+  uint64 pool_id = 1;
+}
+
+message MsgAddLiquidity {
+  option (cosmos.msg.v1.signer) = "sender";
+  string sender   = 1;
+  uint64 pool_id  = 2;
+  string amount_a = 3;
+  string amount_b = 4;
+}
+
+message MsgAddLiquidityResponse {
+  string amount_a = 1;
+  string amount_b = 2;
+  string shares   = 3;
+}
+
+message MsgRemoveLiquidity {
+  option (cosmos.msg.v1.signer) = "sender";
+  string sender        = 1;
+  uint64 pool_id       = 2;
+  string shares_to_burn = 3;
+}
+
+message MsgRemoveLiquidityResponse {
+  string amount_a = 1;
+  string amount_b = 2;
+}
+
+message MsgSwapExactIn {
+  option (cosmos.msg.v1.signer) = "sender";
+  string sender         = 1;
+  uint64 pool_id        = 2;
+  string denom_in       = 3;
+  string amount_in      = 4;
+  string min_amount_out = 5;
+}
+
+message MsgSwapExactInResponse {
+  string amount_out = 1;
+}

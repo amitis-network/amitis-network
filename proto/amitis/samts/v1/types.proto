@@ -1,0 +1,26 @@
+syntax = "proto3";
+package amitis.samts.v1;
+
+option go_package = "github.com/amitis-network/amitis-network/x/samts/types";
+
+// ValidatorPosition tracks a validator's sAMTS position
+message ValidatorPosition {
+  string validator_address = 1;
+  string samts_balance     = 2; // always equals staked AMTS (1:1)
+}
+
+// FlashLoan represents an in-flight flash loan (cleared same block)
+message FlashLoan {
+  string borrower    = 1;
+  string amount      = 2;
+  string fee         = 3;
+  uint64 block_height = 4;
+}
+
+// Params defines module parameters
+message Params {
+  // Flash loan fee rate e.g. "0.0005" = 0.05%
+  string flash_loan_fee_rate = 1;
+  // Max fraction of pool per loan e.g. "0.5" = 50%
+  string max_loan_fraction   = 2;
+}

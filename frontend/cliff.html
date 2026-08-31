@@ -1,0 +1,1807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amitis Network — Validator Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@300;400;500;700;800;900&family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root {
+  --black: #080810;
+  --off-black: #0e0e1a;
+  --card: rgba(255,255,255,0.03);
+  --card2: rgba(255,255,255,0.06);
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --green: #4ade80;
+  --green-dim: rgba(74,222,128,0.08);
+  --green-border: rgba(74,222,128,0.2);
+  --blue: #60a5fa;
+  --gold: #fbbf24;
+  --gold-dim: rgba(251,191,36,0.08);
+  --gold-border: rgba(251,191,36,0.2);
+  --red: #ef4444;
+  --white: #ffffff;
+  --muted: rgba(255,255,255,0.75);
+  --dim: rgba(255,255,255,0.55);
+  --dimmer: rgba(255,255,255,0.35);
+  --mono: 'DM Mono', monospace;
+  --sans: 'Cabinet Grotesk', sans-serif;
+}
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { background: var(--black); color: var(--white); font-family: var(--sans); min-height: 100vh; overflow-x: hidden; line-height: 1.5; }
+body::before { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events: none; z-index: 9999; opacity: 0.4; }
+
+/* GATE */
+.gate { position: fixed; inset: 0; z-index: 10000; background: var(--black); display: flex; align-items: center; justify-content: center; }
+.gate-box { background: var(--card); border: 1px solid var(--border2); border-radius: 20px; padding: 48px; width: 380px; text-align: center; }
+.gate-title { font-size: 20px; font-weight: 800; letter-spacing: -0.01em; margin-bottom: 4px; margin-top: 24px; }
+.gate-sub { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 28px; }
+.gate-input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border2); border-radius: 8px; padding: 13px 16px; font-family: var(--mono); font-size: 14px; color: var(--white); outline: none; letter-spacing: 0.1em; margin-bottom: 12px; transition: border-color 0.2s; text-align: center; }
+.gate-input:focus { border-color: var(--green); }
+.gate-input.error { border-color: var(--red); animation: shake 0.3s ease; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+.gate-btn { width: 100%; background: var(--green); border: none; border-radius: 8px; padding: 13px; font-family: var(--sans); font-size: 14px; font-weight: 700; color: #000; cursor: pointer; transition: all 0.2s; }
+.gate-btn:hover { background: #6ee79e; transform: translateY(-1px); }
+.gate-err { font-family: var(--mono); font-size: 11px; color: var(--red); margin-top: 10px; min-height: 16px; }
+
+/* NAV */
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 40px; background: rgba(8,8,16,0.92); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); }
+.nav-brand { display: flex; align-items: center; gap: 10px; }
+.nav-name { font-weight: 800; font-size: 14px; letter-spacing: 0.15em; }
+.nav-tag { font-family: var(--mono); font-size: 9px; color: var(--green); background: var(--green-dim); border: 1px solid var(--green-border); padding: 3px 10px; border-radius: 3px; letter-spacing: 0.08em; }
+.nav-right { display: flex; align-items: center; gap: 16px; }
+.live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); animation: blink 2s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:0.3} }
+.nav-stat { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+.nav-block-live { font-family: var(--mono); font-size: 10px; color: var(--green); transition: opacity 0.2s; }
+.nav-block-live.flash { opacity: 0.3; }
+.tx-feed-row { display: grid; grid-template-columns: 20px 1fr 90px 110px 70px; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--border); animation: fadeIn 0.4s ease; }
+.tx-feed-row:last-child { border-bottom: none; }
+.tx-feed-row:hover { background: var(--card2); cursor: pointer; }
+@keyframes fadeIn { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:translateX(0)} }
+.counter { display: inline-block; transition: all 0.3s ease; }
+.nav-price { font-family: var(--mono); font-size: 10px; color: var(--green); background: var(--green-dim); border: 1px solid var(--green-border); padding: 4px 10px; border-radius: 3px; }
+
+/* TABS */
+.tab-bar { position: fixed; top: 56px; left: 0; right: 0; z-index: 99; display: flex; background: rgba(8,8,16,0.92); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 0 40px; }
+.tab { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); padding: 14px 20px; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+.tab:hover { color: var(--muted); }
+.tab.active { color: var(--green); border-bottom-color: var(--green); }
+
+/* MAIN */
+main { padding: 116px 40px 60px; max-width: 1280px; margin: 0 auto; position: relative; z-index: 1; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* PAGE HEADER */
+.page-label { font-family: var(--mono); font-size: 10px; color: var(--green); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 8px; display: block; }
+.page-title { font-size: clamp(32px,4vw,48px); font-weight: 900; letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 6px; }
+.page-title em { font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400; color: var(--green); }
+.page-sub { font-size: 14px; color: var(--muted); margin-bottom: 32px; }
+
+/* AGG CARDS */
+.agg-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 12px; margin-bottom: 28px; }
+.agg-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px 20px; }
+.agg-card.hi-green { background: var(--green-dim); border-color: var(--green-border); }
+.agg-card.hi-gold { background: var(--gold-dim); border-color: var(--gold-border); }
+.agg-card.hi-blue { background: rgba(96,165,250,0.06); border-color: rgba(96,165,250,0.2); }
+.agg-label { font-family: var(--mono); font-size: 9px; color: var(--dim); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 10px; }
+.agg-val { font-family: var(--mono); font-size: clamp(24px,3vw,36px); font-weight: 700; line-height: 1; margin-bottom: 4px; letter-spacing: -0.02em; }
+.agg-val.green { color: var(--green); }
+.agg-val.gold { color: var(--gold); }
+.agg-val.blue { color: var(--blue); }
+.agg-sub { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.agg-usd { font-family: var(--mono); font-size: 12px; color: var(--dim); margin-top: 6px; }
+
+/* SECTION HEADER */
+.section-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; margin-top: 28px; }
+.section-title { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; }
+.section-meta { font-family: var(--mono); font-size: 10px; color: var(--dimmer); }
+.refresh-btn { font-family: var(--mono); font-size: 10px; color: var(--dim); background: none; border: 1px solid var(--border); padding: 4px 12px; border-radius: 4px; cursor: pointer; transition: all 0.15s; }
+.refresh-btn:hover { border-color: var(--border2); color: var(--muted); }
+
+/* VALIDATOR TABLE (co-op style) */
+.val-table { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+.val-table-head { display: grid; grid-template-columns: 60px 1fr 180px 180px 140px 100px 100px; gap: 12px; padding: 12px 20px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02); }
+.val-table-head span { font-family: var(--mono); font-size: 9px; color: var(--dimmer); letter-spacing: 0.15em; text-transform: uppercase; }
+.val-row { display: grid; grid-template-columns: 60px 1fr 180px 180px 140px 100px 100px; gap: 12px; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); transition: background 0.15s; }
+.val-row:last-child { border-bottom: none; }
+.val-row:hover { background: var(--card2); }
+.val-petal { width: 38px; height: 38px; border-radius: 50%; background: var(--green-dim); border: 1px solid var(--green-border); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--green); }
+.val-name { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+.val-addr { font-family: var(--mono); font-size: 10px; color: var(--dim); }
+.val-amts { font-family: var(--mono); font-size: 14px; font-weight: 700; }
+.val-amts.gold { color: var(--gold); }
+.val-usd { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 2px; }
+.val-status { display: flex; align-items: center; gap: 6px; }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+.status-dot.red { background: var(--red); }
+.status-txt { font-family: var(--mono); font-size: 10px; color: var(--green); }
+.status-txt.red { color: var(--red); }
+
+/* BOTTOM GRID */
+.bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px; }
+.info-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+.info-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+.info-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.info-row:last-child { border-bottom: none; }
+.info-key { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.info-val { font-family: var(--mono); font-size: 11px; }
+.info-val.green { color: var(--green); }
+.info-val.gold { color: var(--gold); }
+
+/* 21 PETAL TABLE */
+.petal-table { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+.petal-table-head { display: grid; grid-template-columns: 56px 1fr 200px 200px 160px 110px; gap: 12px; padding: 11px 20px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02); }
+.petal-table-head span { font-family: var(--mono); font-size: 9px; color: var(--dimmer); letter-spacing: 0.15em; text-transform: uppercase; }
+.petal-row { display: grid; grid-template-columns: 56px 1fr 200px 200px 160px 110px; gap: 12px; align-items: center; padding: 14px 20px; border-bottom: 1px solid var(--border); transition: background 0.15s; }
+.petal-row:last-child { border-bottom: none; }
+.petal-row:hover { background: var(--card2); }
+.petal-row.faded { opacity: 0.4; }
+.petal-badge { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 12px; font-weight: 700; }
+.petal-badge.active { background: var(--green-dim); border: 1px solid var(--green-border); color: var(--green); }
+.petal-badge.pending { background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.2); color: var(--gold); }
+.petal-badge.available { background: var(--card2); border: 1px solid var(--border); color: var(--dim); }
+.petal-flower { font-family: var(--mono); font-size: 10px; color: var(--green); margin-bottom: 2px; }
+.petal-moniker { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+.petal-addr { font-family: var(--mono); font-size: 10px; color: var(--dim); }
+.petal-amts { font-family: var(--mono); font-size: 13px; font-weight: 700; }
+.petal-amts.gold { color: var(--gold); }
+.petal-usd { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-top: 2px; }
+.status-pill { font-family: var(--mono); font-size: 9px; font-weight: 700; letter-spacing: 0.05em; padding: 4px 12px; border-radius: 20px; display: inline-block; }
+.status-pill.active { background: var(--green-dim); color: var(--green); border: 1px solid var(--green-border); }
+.status-pill.pending { background: rgba(251,191,36,0.08); color: var(--gold); border: 1px solid rgba(251,191,36,0.2); }
+.status-pill.available { background: var(--card2); color: var(--dim); border: 1px solid var(--border); }
+.status-pill.jailed { background: rgba(239,68,68,0.1); color: var(--red); border: 1px solid rgba(239,68,68,0.25); }
+
+/* CHAIN TABLES */
+.chain-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.chain-table { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+.chain-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02); }
+.chain-title { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; }
+.chain-meta-txt { font-family: var(--mono); font-size: 10px; color: var(--dimmer); }
+.chain-col-head { display: grid; gap: 10px; padding: 8px 16px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.01); }
+.chain-col-head span { font-family: var(--mono); font-size: 9px; color: var(--dimmer); letter-spacing: 0.12em; text-transform: uppercase; }
+.block-cols { grid-template-columns: 90px 1fr 50px 70px; }
+.tx-cols { grid-template-columns: 20px 1fr 90px 110px 70px; }
+.chain-row { display: grid; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--border); transition: background 0.15s; }
+.chain-row:last-child { border-bottom: none; }
+.chain-row:hover { background: var(--card2); }
+.chain-scroll { max-height: 480px; overflow-y: auto; }
+.chain-scroll::-webkit-scrollbar { width: 4px; }
+.chain-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+.cr-height { font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--green); }
+.cr-hash { font-family: var(--mono); font-size: 10px; color: var(--blue); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cr-count { font-family: var(--mono); font-size: 10px; text-align: center; background: rgba(255,255,255,0.06); border-radius: 3px; padding: 2px 6px; }
+.cr-age { font-family: var(--mono); font-size: 10px; color: var(--muted); text-align: right; }
+.cr-ok { width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; background: rgba(74,222,128,0.15); color: var(--green); border: 1px solid rgba(74,222,128,0.3); }
+.cr-err { width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+.cr-type { font-family: var(--mono); font-size: 10px; color: var(--muted); background: rgba(255,255,255,0.05); border-radius: 3px; padding: 2px 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* NETWORK STATS */
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.stats-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+.stats-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02); }
+.stats-title { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; }
+.stats-meta { font-family: var(--mono); font-size: 10px; color: var(--dimmer); }
+.rank-row { display: grid; grid-template-columns: 28px 1fr 130px; gap: 12px; align-items: center; padding: 10px 20px; border-bottom: 1px solid var(--border); transition: background 0.15s; }
+.rank-row:last-child { border-bottom: none; }
+.rank-row:hover { background: var(--card2); }
+.rank-num { font-family: var(--mono); font-size: 11px; color: var(--dimmer); text-align: right; }
+.rank-addr { font-family: var(--mono); font-size: 11px; color: var(--blue); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rank-sub { font-family: var(--mono); font-size: 9px; color: var(--dimmer); margin-top: 2px; }
+.rank-bar-wrap { height: 2px; background: var(--border); border-radius: 1px; margin-top: 4px; }
+.rank-bar { height: 100%; border-radius: 1px; transition: width 0.5s ease; }
+.rank-val { font-family: var(--mono); font-size: 12px; font-weight: 700; text-align: right; }
+.rank-usd { font-family: var(--mono); font-size: 10px; color: var(--dim); margin-top: 2px; text-align: right; }
+
+/* HRB CARD */
+.hrb-card { background: var(--gold-dim); border: 1px solid var(--gold-border); border-radius: 16px; padding: 24px 28px; margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 24px; }
+.hrb-stat-label { font-family: var(--mono); font-size: 9px; color: rgba(251,191,36,0.6); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px; }
+.hrb-stat-val { font-family: var(--mono); font-size: 28px; font-weight: 700; color: var(--gold); line-height: 1; letter-spacing: -0.02em; margin-bottom: 4px; }
+.hrb-stat-sub { font-family: var(--mono); font-size: 11px; color: rgba(251,191,36,0.5); }
+
+/* WHALE ALERT */
+.whale-card { background: rgba(96,165,250,0.05); border: 1px solid rgba(96,165,250,0.15); border-radius: 16px; overflow: hidden; }
+.whale-row { display: grid; grid-template-columns: 90px 1fr 160px 80px; gap: 12px; align-items: center; padding: 11px 20px; border-bottom: 1px solid rgba(96,165,250,0.1); }
+.whale-row:last-child { border-bottom: none; }
+.whale-block { font-family: var(--mono); font-size: 11px; color: var(--blue); }
+.whale-addrs { font-family: var(--mono); font-size: 10px; color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.whale-amt { font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--blue); text-align: right; }
+.whale-age { font-family: var(--mono); font-size: 10px; color: var(--muted); text-align: right; }
+
+/* PROTOCOL */
+.proto-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.proto-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+.proto-head { padding: 14px 20px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02); }
+.proto-title { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; }
+.proto-sub { font-family: var(--mono); font-size: 9px; color: var(--dimmer); margin-top: 2px; }
+.stat-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; border-bottom: 1px solid var(--border); }
+.stat-row:last-child { border-bottom: none; }
+.stat-key { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.stat-val { font-family: var(--mono); font-size: 11px; }
+.stat-val.green { color: var(--green); }
+.stat-val.gold { color: var(--gold); }
+.stat-val.blue { color: var(--blue); }
+.stat-val.red { color: var(--red); }
+
+/* GOV */
+.gov-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; margin-top: 16px; }
+.gov-row { padding: 14px 20px; border-bottom: 1px solid var(--border); }
+.gov-row:last-child { border-bottom: none; }
+.gov-badge { font-family: var(--mono); font-size: 9px; padding: 3px 10px; border-radius: 3px; font-weight: 700; }
+.gov-badge.voting { background: rgba(96,165,250,0.12); color: var(--blue); border: 1px solid rgba(96,165,250,0.25); }
+.gov-badge.passed { background: var(--green-dim); color: var(--green); border: 1px solid var(--green-border); }
+.gov-badge.rejected { background: rgba(239,68,68,0.1); color: var(--red); border: 1px solid rgba(239,68,68,0.25); }
+
+/* CHARTS */
+.chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+.chart-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+.chart-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02); }
+.chart-title { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; }
+.chart-stat { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+.chart-body { padding: 16px 20px 12px; }
+
+/* LIVE GRAPH */
+.graph-wrap { position: relative; background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+.graph-svg { width: 100%; display: block; }
+.graph-legend { display: flex; gap: 20px; padding: 14px 20px; border-top: 1px solid var(--border); background: rgba(255,255,255,0.02); flex-wrap: wrap; }
+.graph-legend-item { display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 10px; color: var(--muted); }
+.graph-legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.graph-stats { display: flex; gap: 24px; padding: 14px 20px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02); }
+.graph-stat { font-family: var(--mono); font-size: 10px; color: var(--dim); }
+.graph-stat span { color: var(--green); }
+.graph-tooltip { position: absolute; background: rgba(8,8,16,0.95); border: 1px solid var(--border2); border-radius: 8px; padding: 8px 12px; font-family: var(--mono); font-size: 11px; pointer-events: none; opacity: 0; transition: opacity 0.15s; white-space: nowrap; z-index: 10; }
+
+/* EARNINGS PROJECTION */
+.projection-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-top: 16px; }
+.projection-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+.projection-card.hi { background: var(--green-dim); border-color: var(--green-border); }
+.proj-label { font-family: var(--mono); font-size: 9px; color: var(--dim); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 10px; }
+.proj-val { font-family: var(--mono); font-size: 28px; font-weight: 700; color: var(--green); line-height: 1; letter-spacing: -0.02em; margin-bottom: 4px; }
+.proj-sub { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.proj-basis { font-family: var(--mono); font-size: 9px; color: var(--dimmer); margin-top: 8px; }
+
+/* NETWORK HEALTH SCORE */
+.health-score-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 32px 40px; margin-bottom: 20px; display: grid; grid-template-columns: 200px 1fr; gap: 40px; align-items: center; }
+.health-score-dial { text-align: center; }
+.health-score-num { font-family: var(--mono); font-size: 80px; font-weight: 900; line-height: 1; letter-spacing: -0.04em; }
+.health-score-label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; margin-top: 6px; }
+.health-score-grade { font-family: var(--mono); font-size: 14px; font-weight: 700; margin-top: 4px; }
+.health-components { display: flex; flex-direction: column; gap: 14px; }
+.health-component { display: grid; grid-template-columns: 160px 1fr 50px; gap: 12px; align-items: center; }
+.health-comp-label { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.health-comp-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.health-comp-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
+.health-comp-score { font-family: var(--mono); font-size: 11px; font-weight: 700; text-align: right; }
+
+/* VELOCITY ALERTS */
+.velocity-row { display: grid; grid-template-columns: 1fr 80px 80px 90px; gap: 12px; align-items: center; padding: 11px 20px; border-bottom: 1px solid var(--border); transition: background 0.15s; }
+.velocity-row:last-child { border-bottom: none; }
+.velocity-row:hover { background: var(--card2); }
+.velocity-addr { font-family: var(--mono); font-size: 11px; color: var(--blue); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.velocity-mult { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--gold); text-align: center; }
+.velocity-recent { font-family: var(--mono); font-size: 11px; color: var(--white); text-align: center; }
+.velocity-base { font-family: var(--mono); font-size: 11px; color: var(--dim); text-align: right; }
+
+/* NEW WALLET RADAR */
+.new-wallet-row { display: grid; grid-template-columns: 1fr 80px 100px 60px; gap: 12px; align-items: center; padding: 10px 20px; border-bottom: 1px solid var(--border); transition: background 0.15s; }
+.new-wallet-row:last-child { border-bottom: none; }
+.new-wallet-row:hover { background: var(--card2); }
+.new-wallet-addr { font-family: var(--mono); font-size: 11px; color: var(--blue); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.new-wallet-block { font-family: var(--mono); font-size: 10px; color: var(--dim); }
+.new-wallet-bal { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--green); text-align: right; }
+.new-wallet-txs { font-family: var(--mono); font-size: 10px; color: var(--muted); text-align: right; }
+.new-badge { display: inline-block; font-family: var(--mono); font-size: 8px; font-weight: 700; letter-spacing: 0.08em; padding: 2px 6px; border-radius: 3px; background: rgba(74,222,128,0.12); color: var(--green); border: 1px solid var(--green-border); margin-left: 6px; vertical-align: middle; }
+
+/* SIGNING RATE */
+.sign-bar-wrap { height: 3px; background: var(--border); border-radius: 2px; margin-top: 4px; width: 80px; }
+.sign-bar { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+.sign-rate { font-family: var(--mono); font-size: 11px; font-weight: 700; }
+.sign-rate.good { color: var(--green); }
+.sign-rate.warn { color: var(--gold); }
+.sign-rate.bad { color: var(--red); }
+
+/* LOADING */
+.loading { display: flex; align-items: center; gap: 10px; padding: 32px 20px; justify-content: center; font-family: var(--mono); font-size: 11px; color: var(--dim); }
+.spinner { width: 14px; height: 14px; border: 2px solid var(--border2); border-top-color: var(--green); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+@keyframes spin { to{transform:rotate(360deg)} }
+
+/* TX MODAL */
+.tx-modal-overlay { position: fixed; inset: 0; z-index: 500; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; padding: 80px 20px; }
+.tx-modal-overlay.open { display: flex; }
+.tx-modal { background: var(--off-black); border: 1px solid var(--border2); border-radius: 16px; width: 100%; max-width: 640px; overflow: hidden; animation: slideUp 0.2s ease; }
+@keyframes slideUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+.tx-modal-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02); }
+.tx-modal-title { font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.1em; }
+.tx-modal-close { width: 26px; height: 26px; border-radius: 4px; background: rgba(255,255,255,0.06); border: 1px solid var(--border2); color: var(--muted); font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.tx-modal-close:hover { border-color: var(--red); color: var(--red); }
+.tx-modal-body { max-height: 70vh; overflow-y: auto; }
+.tx-modal-row { display: grid; grid-template-columns: 140px 1fr; gap: 12px; padding: 11px 20px; border-bottom: 1px solid var(--border); }
+.tx-modal-row:last-child { border-bottom: none; }
+.tx-modal-key { font-family: var(--mono); font-size: 10px; color: var(--muted); padding-top: 1px; }
+.tx-modal-val { font-family: var(--mono); font-size: 11px; word-break: break-all; }
+.tx-modal-val.green { color: var(--green); }
+.tx-modal-val.blue { color: var(--blue); }
+.tx-modal-val.red { color: var(--red); }
+
+@media(max-width:960px) {
+  nav,.tab-bar{padding:0 16px}
+  main{padding:116px 16px 60px}
+  .agg-grid{grid-template-columns:repeat(2,1fr)}
+  .val-table-head,.val-row{grid-template-columns:50px 1fr 140px 100px}
+  .val-table-head span:nth-child(n+4),.val-row>*:nth-child(n+4){display:none}
+  .petal-table-head,.petal-row{grid-template-columns:46px 1fr 140px 100px}
+  .petal-table-head span:nth-child(n+4),.petal-row>*:nth-child(n+4){display:none}
+  .stats-grid,.chain-grid,.proto-grid,.chart-grid,.bottom-grid{grid-template-columns:1fr}
+  .hrb-card{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- GATE -->
+<div class="gate" id="gate">
+  <div class="gate-box">
+    <svg width="52" height="52" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="160" cy="160" r="155" fill="#080810"/>
+      <circle cx="160" cy="160" r="155" fill="none" stroke="white" stroke-width="6"/>
+      <text x="160" y="252" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-size="260" font-weight="900" fill="white">A</text>
+      <path d="M248,72 C268,52 288,68 268,88 C258,98 238,92 248,72Z" fill="#4ade80" opacity="0.8"/>
+    </svg>
+    <div class="gate-title">Amitis Network</div>
+    <div class="gate-sub">Validator Dashboard — Restricted</div>
+    <input class="gate-input" id="gateInput" type="password" placeholder="Access code" onkeydown="if(event.key==='Enter')checkPass()" autocomplete="off">
+    <button class="gate-btn" onclick="checkPass()">Enter Dashboard</button>
+    <div class="gate-err" id="gateErr"></div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">
+    <svg width="26" height="26" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="160" cy="160" r="155" fill="#080810"/>
+      <circle cx="160" cy="160" r="155" fill="none" stroke="white" stroke-width="6"/>
+      <text x="160" y="252" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-size="260" font-weight="900" fill="white">A</text>
+      <path d="M248,72 C268,52 288,68 268,88 C258,98 238,92 248,72Z" fill="#4ade80" opacity="0.8"/>
+    </svg>
+    <span class="nav-name">AMITIS</span>
+    <span class="nav-tag">VALIDATOR DASHBOARD</span>
+  </div>
+  <div class="nav-right">
+    <div class="live-dot"></div>
+    <span class="nav-block-live" id="navBlock">—</span>
+    <span class="nav-price">$7.50 / AMTS</span>
+  </div>
+</nav>
+
+<!-- TABS -->
+<div class="tab-bar">
+  <div class="tab active" onclick="switchTab('coop')">Co-op (Petals 1–6)</div>
+  <div class="tab" onclick="switchTab('petals')">All 21 Petals</div>
+  <div class="tab" onclick="switchTab('activity')">Chain Activity</div>
+  <div class="tab" onclick="switchTab('graph')">Live Graph</div>
+  <div class="tab" onclick="switchTab('network')">Network Stats</div>
+  <div class="tab" onclick="switchTab('protocol')">Protocol</div>
+</div>
+
+<main>
+
+<!-- ═══ CO-OP TAB ═══ -->
+<div class="tab-content active" id="tab-coop">
+  <span class="page-label">Cooperative Group — Petals 1–6</span>
+  <h1 class="page-title">Validator <em>Earnings</em></h1>
+  <p class="page-sub">Aggregated earnings, unclaimed rewards, and performance for the co-op group. Auto-refreshes every 30 seconds.</p>
+
+  <div class="agg-grid">
+    <div class="agg-card hi-green">
+      <div class="agg-label">Total Unclaimed Rewards</div>
+      <div class="agg-val green" id="coopOut">—</div>
+      <div class="agg-sub">AMTS</div>
+      <div class="agg-usd" id="coopOutUsd">—</div>
+    </div>
+    <div class="agg-card">
+      <div class="agg-label">Total Earnings (Wallets)</div>
+      <div class="agg-val" id="coopEarn">—</div>
+      <div class="agg-sub">AMTS</div>
+      <div class="agg-usd" id="coopEarnUsd">—</div>
+    </div>
+    <div class="agg-card hi-gold">
+      <div class="agg-label">Combined Value</div>
+      <div class="agg-val gold" id="coopTotal">—</div>
+      <div class="agg-sub">AMTS total</div>
+      <div class="agg-usd" id="coopTotalUsd">—</div>
+    </div>
+    <div class="agg-card">
+      <div class="agg-label">Per Petal (Unclaimed)</div>
+      <div class="agg-val blue" id="coopPer">—</div>
+      <div class="agg-sub">AMTS average</div>
+      <div class="agg-usd" id="coopPerUsd">—</div>
+    </div>
+    <div class="agg-card hi-blue">
+      <div class="agg-label">Group Rebated to Users</div>
+      <div class="agg-val blue" id="coopRebate">—</div>
+      <div class="agg-sub">AMTS · group's 6/21 share</div>
+      <div class="agg-usd" id="coopRebateUsd">—</div>
+    </div>
+  </div>
+
+  <div class="section-hd" style="margin-top:0">
+    <span class="section-title">Individual Validator Performance</span>
+    <div style="display:flex;align-items:center;gap:12px">
+      <span class="section-meta" id="coopMeta">—</span>
+      <button class="refresh-btn" onclick="loadCoop()">↺ Refresh</button>
+    </div>
+  </div>
+
+  <div class="val-table">
+    <div class="val-table-head" style="grid-template-columns:60px 1fr 180px 180px 140px 100px 100px">
+      <span>Petal</span><span>Validator</span><span>Earnings Wallet</span><span>Unclaimed Rewards</span><span>USD Value</span><span>Signing</span><span>Status</span>
+    </div>
+    <div id="coopRows"><div class="loading"><div class="spinner"></div>Loading validator data…</div></div>
+  </div>
+
+  <div class="bottom-grid">
+    <div class="info-card">
+      <div class="info-title">Network Parameters</div>
+      <div class="info-row"><span class="info-key">Chain ID</span><span class="info-val">amitis-network</span></div>
+      <div class="info-row"><span class="info-key">Latest Block</span><span class="info-val green" id="coopBlock">—</span></div>
+      <div class="info-row"><span class="info-key">Active Validators</span><span class="info-val" id="coopVals">—</span></div>
+      <div class="info-row"><span class="info-key">AMTS Price</span><span class="info-val green">$7.50 (oracle anchored)</span></div>
+      <div class="info-row"><span class="info-key">Fee Rebate</span><span class="info-val green">80% (hardcoded)</span></div>
+      <div class="info-row"><span class="info-key">Flash Loan Rate</span><span class="info-val">0.05%</span></div>
+      <div class="info-row"><span class="info-key">Total Supply</span><span class="info-val">1,000,000,000 AMTS</span></div>
+      <div class="info-row"><span class="info-key">Community Pool</span><span class="info-val" id="coopPool">—</span></div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">Co-op Group Summary</div>
+      <div class="info-row"><span class="info-key">Petals Held</span><span class="info-val green">6 of 21</span></div>
+      <div class="info-row"><span class="info-key">Network Share</span><span class="info-val green">28.57%</span></div>
+      <div class="info-row"><span class="info-key">Governance Votes</span><span class="info-val">6 / 21 (≥ ⅓ influence)</span></div>
+      <div class="info-row"><span class="info-key">Flash Loan Share</span><span class="info-val">6/21 of facility fees</span></div>
+      <div class="info-row"><span class="info-key">Petals</span><span class="info-val">#1, #2, #3, #4, #5, #6</span></div>
+      <div class="info-row"><span class="info-key">Group Unclaimed</span><span class="info-val gold" id="coopSumOut">—</span></div>
+      <div class="info-row"><span class="info-key">Group Wallet Balance</span><span class="info-val" id="coopSumEarn">—</span></div>
+      <div class="info-row"><span class="info-key">Total Group Value</span><span class="info-val green" id="coopSumTotal">—</span></div>
+    </div>
+  </div>
+
+  <!-- Earnings Projection -->
+  <div class="section-hd">
+    <span class="section-title">Earnings Projection</span>
+    <span class="section-meta" id="projMeta">based on current accumulation rate</span>
+  </div>
+  <div class="projection-grid">
+    <div class="projection-card hi">
+      <div class="proj-label">Per Petal / Month</div>
+      <div class="proj-val" id="projPerPetalMonth">—</div>
+      <div class="proj-sub">AMTS</div>
+      <div class="proj-basis" id="projPerPetalMonthUsd">—</div>
+    </div>
+    <div class="projection-card">
+      <div class="proj-label">Group Total / Month</div>
+      <div class="proj-val" id="projGroupMonth">—</div>
+      <div class="proj-sub">AMTS (6 petals)</div>
+      <div class="proj-basis" id="projGroupMonthUsd">—</div>
+    </div>
+    <div class="projection-card">
+      <div class="proj-label">Per Petal / Year</div>
+      <div class="proj-val" id="projPerPetalYear">—</div>
+      <div class="proj-sub">AMTS</div>
+      <div class="proj-basis" id="projPerPetalYearUsd">—</div>
+    </div>
+    <div class="projection-card">
+      <div class="proj-label">Blocks Per Day</div>
+      <div class="proj-val" id="projBlocksDay">—</div>
+      <div class="proj-sub">estimated</div>
+      <div class="proj-basis">at current block time</div>
+    </div>
+    <div class="projection-card">
+      <div class="proj-label">Txs Per Day</div>
+      <div class="proj-val" id="projTxsDay">—</div>
+      <div class="proj-sub">estimated</div>
+      <div class="proj-basis" id="projTxsDaySub">based on recent rate</div>
+    </div>
+    <div class="projection-card">
+      <div class="proj-label">Annualized ROI</div>
+      <div class="proj-val" id="projRoi">—</div>
+      <div class="proj-sub">on petal #1 cost ($2.5M)</div>
+      <div class="proj-basis" id="projRoiSub">earnings / purchase price</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══ LIVE GRAPH TAB ═══ -->
+<div class="tab-content" id="tab-graph">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="live-dot"></div>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">LIVE — transaction network · updating every 5s</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px">
+      <span style="font-family:var(--mono);font-size:10px;color:var(--dim)">Nodes: <span id="graphNodeCount" style="color:var(--green)">0</span></span>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--dim)">Edges: <span id="graphEdgeCount" style="color:var(--green)">0</span></span>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--dim)">Txs seen: <span id="graphTxCount" style="color:var(--green)">0</span></span>
+      <button class="refresh-btn" onclick="resetGraph()">↺ Reset</button>
+    </div>
+  </div>
+  <div class="graph-wrap">
+    <div class="graph-stats">
+      <span class="graph-stat">HRB-DEBIT <span id="graphHrbTxs">0</span> txs</span>
+      <span class="graph-stat">GRMLAB <span id="graphGrmlabTxs">0</span> txs</span>
+      <span class="graph-stat">Other <span id="graphOtherTxs">0</span> txs</span>
+      <span class="graph-stat">Last tx: <span id="graphLastTx">—</span></span>
+    </div>
+    <svg id="graphSvg" class="graph-svg" style="height:600px"></svg>
+    <div class="graph-legend">
+      <div class="graph-legend-item"><div class="graph-legend-dot" style="background:#fbbf24"></div>HRB-DEBIT</div>
+      <div class="graph-legend-item"><div class="graph-legend-dot" style="background:#60a5fa"></div>GRMLAB Wallets</div>
+      <div class="graph-legend-item"><div class="graph-legend-dot" style="background:#4ade80"></div>Other / New</div>
+      <div class="graph-legend-item"><div class="graph-legend-dot" style="background:#a78bfa"></div>Validators</div>
+      <div class="graph-legend-item" style="margin-left:auto"><div style="width:24px;height:2px;background:rgba(255,255,255,0.3);border-radius:1px"></div><span style="margin-left:6px">Transaction</span></div>
+    </div>
+    <div class="graph-tooltip" id="graphTooltip"></div>
+  </div>
+</div>
+
+<!-- ═══ ALL PETALS TAB ═══ -->
+<div class="tab-content" id="tab-petals">
+  <div class="section-hd" style="margin-top:0">
+    <span class="section-title">All 21 Validator Petals</span>
+    <div style="display:flex;align-items:center;gap:12px">
+      <span class="section-meta" id="petalMeta">—</span>
+      <button class="refresh-btn" onclick="loadPetals()">↺ Refresh</button>
+    </div>
+  </div>
+  <div class="petal-table">
+    <div class="petal-table-head">
+      <span>Petal</span><span>Validator</span><span>Earnings Wallet</span><span>Unclaimed</span><span>USD Value</span><span>Status</span>
+    </div>
+    <div id="petalRows"><div class="loading"><div class="spinner"></div>Loading…</div></div>
+  </div>
+</div>
+
+<!-- ═══ CHAIN ACTIVITY TAB ═══ -->
+<div class="tab-content" id="tab-activity">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="live-dot"></div>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">LIVE — updating every 5s</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:24px">
+      <span style="font-family:var(--mono);font-size:10px;color:var(--dim)">Blocks/min: <span id="blocksPerMin" style="color:var(--green)">—</span></span>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--dim)">Txs/min: <span id="txsPerMin" style="color:var(--green)">—</span></span>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--dim)">Avg block time: <span id="avgBlockTime" style="color:var(--green)">—</span></span>
+    </div>
+  </div>
+  <div class="chain-grid">
+    <div class="chain-table">
+      <div class="chain-head">
+        <span class="chain-title">Latest Blocks</span>
+        <span class="chain-meta-txt" id="blocksMeta">—</span>
+      </div>
+      <div class="chain-col-head block-cols">
+        <span>Height</span><span>Hash</span><span>Txns</span><span>Age</span>
+      </div>
+      <div class="chain-scroll"><div id="blockRows"><div class="loading"><div class="spinner"></div>Loading…</div></div></div>
+    </div>
+    <div class="chain-table">
+      <div class="chain-head">
+        <span class="chain-title">Latest Transactions</span>
+        <span class="chain-meta-txt" id="txsMeta">—</span>
+      </div>
+      <div class="chain-col-head tx-cols">
+        <span></span><span>Hash</span><span>Type</span><span>Amount</span><span>Block</span>
+      </div>
+      <div class="chain-scroll"><div id="txRows"><div class="loading"><div class="spinner"></div>Loading…</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ NETWORK STATS TAB ═══ -->
+<div class="tab-content" id="tab-network">
+
+  <!-- Network Health Score -->
+  <div class="section-hd" style="margin-top:0">
+    <span class="section-title">Network Health Score</span>
+    <span class="section-meta" id="healthScoreMeta">composite score · updates every 30s</span>
+  </div>
+  <div class="health-score-wrap">
+    <div class="health-score-dial">
+      <div class="health-score-num" id="healthScoreNum" style="color:var(--green)">—</div>
+      <div class="health-score-label" style="color:var(--muted)">/ 100</div>
+      <div class="health-score-grade" id="healthScoreGrade" style="color:var(--green)">—</div>
+    </div>
+    <div class="health-components">
+      <div class="health-component">
+        <span class="health-comp-label">Block Time</span>
+        <div class="health-comp-bar"><div class="health-comp-fill" id="hcBlockTime" style="background:var(--green);width:0%"></div></div>
+        <span class="health-comp-score" id="hcBlockTimeScore" style="color:var(--green)">—</span>
+      </div>
+      <div class="health-component">
+        <span class="health-comp-label">Signing Rate</span>
+        <div class="health-comp-bar"><div class="health-comp-fill" id="hcSigning" style="background:var(--green);width:0%"></div></div>
+        <span class="health-comp-score" id="hcSigningScore" style="color:var(--green)">—</span>
+      </div>
+      <div class="health-component">
+        <span class="health-comp-label">Tx Volume Trend</span>
+        <div class="health-comp-bar"><div class="health-comp-fill" id="hcVolume" style="background:var(--green);width:0%"></div></div>
+        <span class="health-comp-score" id="hcVolumeScore" style="color:var(--green)">—</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Velocity Alerts -->
+  <div class="section-hd">
+    <span class="section-title">⚡ Velocity Alerts</span>
+    <span class="section-meta" id="velocityMeta">wallets 2x+ above normal rate · last 100 blocks</span>
+  </div>
+  <div class="stats-card" style="margin-bottom:20px">
+    <div style="display:grid;grid-template-columns:1fr 80px 80px 90px;gap:12px;padding:9px 20px;border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02)">
+      <span style="font-family:var(--mono);font-size:9px;color:var(--dimmer);letter-spacing:.12em;text-transform:uppercase">Address</span>
+      <span style="font-family:var(--mono);font-size:9px;color:var(--dimmer);letter-spacing:.12em;text-transform:uppercase;text-align:center">Spike</span>
+      <span style="font-family:var(--mono);font-size:9px;color:var(--dimmer);letter-spacing:.12em;text-transform:uppercase;text-align:center">Recent</span>
+      <span style="font-family:var(--mono);font-size:9px;color:var(--dimmer);letter-spacing:.12em;text-transform:uppercase;text-align:right">Baseline</span>
+    </div>
+    <div id="velocityRows"><div class="loading"><div class="spinner"></div>Loading…</div></div>
+  </div>
+
+  <!-- New Wallet Radar -->
+  <div class="section-hd">
+    <span class="section-title">New Wallet Radar <span class="new-badge">NEW</span></span>
+    <span class="section-meta" id="newWalletMeta">first appearance in last 24h</span>
+  </div>
+  <div class="stats-card" style="margin-bottom:20px">
+    <div style="display:grid;grid-template-columns:1fr 80px 100px 60px;gap:12px;padding:9px 20px;border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02)">
+      <span style="font-family:var(--mono);font-size:9px;color:var(--dimmer);letter-spacing:.12em;text-transform:uppercase">Address</span>
+      <span style="font-family:var(--mono);font-size:9px;color:var(--dimmer);letter-spacing:.12em;text-transform:uppercase">First Block</span>
+      <span style="font-family:var(--mono);font-size:9px;color:var(--dimmer);letter-spacing:.12em;text-transform:uppercase;text-align:right">Balance</span>
+      <span style="font-family:var(--mono);font-size:9px;color:var(--dimmer);letter-spacing:.12em;text-transform:uppercase;text-align:right">Txs</span>
+    </div>
+    <div id="newWalletRows"><div class="loading"><div class="spinner"></div>Loading…</div></div>
+  </div>
+
+  <!-- HRB Tracker -->
+  <div class="section-hd">
+    <span class="section-title">HRB-Debit Wallet</span>
+    <span class="section-meta">Hamilton Reserve Bank</span>
+  </div>
+  <div class="hrb-card" id="hrbCard">
+    <div><div class="hrb-stat-label">Current Balance</div><div class="hrb-stat-val" id="hrbBal">—</div><div class="hrb-stat-sub">AMTS</div></div>
+    <div><div class="hrb-stat-label">Total Outbound Volume</div><div class="hrb-stat-val" id="hrbSpent">—</div><div class="hrb-stat-sub" id="hrbSpentSub">AMTS sent</div></div>
+    <div><div class="hrb-stat-label">USD Volume</div><div class="hrb-stat-val" id="hrbUsd">—</div><div class="hrb-stat-sub">at $7.50/AMTS</div></div>
+    <div><div class="hrb-stat-label">Transactions</div><div class="hrb-stat-val" id="hrbTxCount">—</div><div class="hrb-stat-sub" id="hrbUpdated">—</div></div>
+  </div>
+
+  <!-- GRMLAB Wallets -->
+  <div class="section-hd">
+    <span class="section-title">GRMLAB Network Wallets</span>
+    <span class="section-meta">200 active wallets</span>
+  </div>
+  <div class="hrb-card" style="background:rgba(96,165,250,0.06);border-color:rgba(96,165,250,0.2)">
+    <div><div class="hrb-stat-label" style="color:rgba(96,165,250,0.6)">Total Files Loaded</div><div class="hrb-stat-val" style="color:var(--blue)" id="grmlabTxs">—</div><div class="hrb-stat-sub" style="color:rgba(96,165,250,0.5)">network activity</div></div>
+    <div><div class="hrb-stat-label" style="color:rgba(96,165,250,0.6)">Network Total Txs</div><div class="hrb-stat-val" style="color:var(--blue)" id="grmlabVal">—</div><div class="hrb-stat-sub" style="color:rgba(96,165,250,0.5)">all transactions</div></div>
+    <div><div class="hrb-stat-label" style="color:rgba(96,165,250,0.6)">Wallets Active</div><div class="hrb-stat-val" style="color:var(--blue)" id="grmlabNet">200</div><div class="hrb-stat-sub" style="color:rgba(96,165,250,0.5)">GRMLAB wallets</div></div>
+    <div><div class="hrb-stat-label" style="color:rgba(96,165,250,0.6)">Wallets Active</div><div class="hrb-stat-val" style="color:var(--blue)">200</div><div class="hrb-stat-sub" style="color:rgba(96,165,250,0.5)" id="grmlabUpdated">—</div></div>
+  </div>
+
+  <!-- Top wallets -->
+  <div class="stats-grid">
+    <div class="stats-card">
+      <div class="stats-head">
+        <span class="stats-title">Top 20 Wallets by Balance</span>
+        <span class="stats-meta" id="topBalMeta">live balances</span>
+      </div>
+      <div id="topBalRows"><div class="loading"><div class="spinner"></div>Loading…</div></div>
+    </div>
+    <div class="stats-card">
+      <div class="stats-head">
+        <span class="stats-title">Top 20 by Transaction Count</span>
+        <span class="stats-meta" id="topTxMeta">recent blocks</span>
+      </div>
+      <div id="topTxRows"><div class="loading"><div class="spinner"></div>Loading…</div></div>
+    </div>
+  </div>
+
+  <!-- Fee Rebate Leaderboard -->
+  <div class="section-hd">
+    <span class="section-title">Fee Rebate Leaderboard</span>
+    <span class="section-meta" id="rebateMeta">80% returned to users · last 10,000 blocks</span>
+  </div>
+  <div class="stats-card" style="margin-bottom:16px">
+    <div id="rebateRows"><div class="loading"><div class="spinner"></div>Loading…</div></div>
+  </div>
+
+  <!-- Whale watch -->
+  <div class="section-hd">
+    <span class="section-title">Whale Watch</span>
+    <span class="section-meta">Transactions over 10,000 AMTS</span>
+  </div>
+  <div class="whale-card">
+    <div style="display:grid;grid-template-columns:90px 1fr 160px 80px;gap:12px;padding:9px 20px;border-bottom:1px solid rgba(96,165,250,0.1);background:rgba(255,255,255,0.02)">
+      <span style="font-family:var(--mono);font-size:9px;color:var(--dimmer);letter-spacing:.12em;text-transform:uppercase">Block</span>
+      <span style="font-family:var(--mono);font-size:9px;color:var(--dimmer);letter-spacing:.12em;text-transform:uppercase">From → To</span>
+      <span style="font-family:var(--mono);font-size:9px;color:var(--dimmer);letter-spacing:.12em;text-transform:uppercase;text-align:right">Amount</span>
+      <span style="font-family:var(--mono);font-size:9px;color:var(--dimmer);letter-spacing:.12em;text-transform:uppercase;text-align:right">Age</span>
+    </div>
+    <div id="whaleRows"><div class="loading"><div class="spinner"></div>Loading…</div></div>
+  </div>
+
+  <!-- Charts -->
+  <div class="chart-grid">
+    <div class="chart-card">
+      <div class="chart-head">
+        <span class="chart-title">Fee Revenue — Last 30 Blocks</span>
+        <span class="chart-stat" id="feeChartStat">—</span>
+      </div>
+      <div class="chart-body">
+        <canvas id="feeChart" height="90" style="width:100%;display:block"></canvas>
+        <div style="display:flex;justify-content:space-between;margin-top:6px">
+          <span style="font-family:var(--mono);font-size:9px;color:var(--dimmer)">older</span>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--dimmer)">latest</span>
+        </div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-head">
+        <span class="chart-title">Transaction Volume — Last 30 Blocks</span>
+        <span class="chart-stat" id="txChartStat">—</span>
+      </div>
+      <div class="chart-body">
+        <canvas id="txChart" height="90" style="width:100%;display:block"></canvas>
+        <div style="display:flex;justify-content:space-between;margin-top:6px">
+          <span style="font-family:var(--mono);font-size:9px;color:var(--dimmer)">older</span>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--dimmer)">latest</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PROTOCOL TAB ═══ -->
+<div class="tab-content" id="tab-protocol">
+  <div class="proto-grid">
+    <div class="proto-card">
+      <div class="proto-head"><div class="proto-title">Network Parameters</div><div class="proto-sub">Chain: amitis-network</div></div>
+      <div class="stat-row"><span class="stat-key">Latest Block</span><span class="stat-val green" id="protoBlock">—</span></div>
+      <div class="stat-row"><span class="stat-key">Active Validators</span><span class="stat-val" id="protoVals">—</span></div>
+      <div class="stat-row"><span class="stat-key">AMTS Price</span><span class="stat-val green">$7.50 (oracle)</span></div>
+      <div class="stat-row"><span class="stat-key">Fee Rebate</span><span class="stat-val green">80% hardcoded</span></div>
+      <div class="stat-row"><span class="stat-key">Flash Loan Rate</span><span class="stat-val">0.05%</span></div>
+      <div class="stat-row"><span class="stat-key">Total Supply</span><span class="stat-val">1,000,000,000 AMTS</span></div>
+      <div class="stat-row"><span class="stat-key">Community Pool</span><span class="stat-val" id="protoPool">—</span></div>
+    </div>
+    <div class="proto-card">
+      <div class="proto-head"><div class="proto-title">AmitisSwap</div><div class="proto-sub">Code ID 7</div></div>
+      <div id="swapStats"><div class="loading"><div class="spinner"></div>Loading…</div></div>
+    </div>
+    <div class="proto-card">
+      <div class="proto-head"><div class="proto-title">Flash Loan + IBC</div><div class="proto-sub">x/samts · channel-2 ↔ Osmosis</div></div>
+      <div id="flashIbcStats"><div class="loading"><div class="spinner"></div>Loading…</div></div>
+    </div>
+  </div>
+  <div class="gov-card">
+    <div class="stats-head" style="padding:14px 20px;border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02)">
+      <span class="stats-title">Governance Proposals</span>
+      <span class="stats-meta" id="govMeta">—</span>
+    </div>
+    <div id="govRows"><div class="loading"><div class="spinner"></div>Loading…</div></div>
+  </div>
+</div>
+
+</main>
+
+<!-- TX MODAL -->
+<div class="tx-modal-overlay" id="txModal" onclick="if(event.target===this)closeTxModal()">
+  <div class="tx-modal">
+    <div class="tx-modal-head">
+      <span class="tx-modal-title" id="txModalTitle">TRANSACTION</span>
+      <button class="tx-modal-close" onclick="closeTxModal()">✕</button>
+    </div>
+    <div class="tx-modal-body" id="txModalBody"></div>
+  </div>
+</div>
+
+<script>
+const REST = 'https://rest.amitis.network';
+const RPC  = 'https://rpc.amitis.network';
+const API  = 'https://api.amitis.network';
+const AMTS_PRICE = 7.50;
+const HRB_ADDR = 'amitis1lltumsp2r5t36yeqe3kyskzaaqyas7qg06tn8f';
+const WHALE_THRESHOLD = 10000; // AMTS
+
+const FLOWER_NAMES = ['Rose','Lotus','Orchid','Jasmine','Lily','Dahlia','Iris','Violet','Marigold','Tulip','Magnolia','Lavender','Poppy','Sunflower','Daisy','Peony','Chrysanthemum','Aster','Cosmos','Zinnia','Amaranth'];
+
+// Co-op petals 1-6
+const COOP = [
+  { petal:1, moniker:'amitis-validator-1', earnings:'amitis1mzzpffa8lzqwh0zry6yj57t7qzu43v3m88n5as', valoper:'amitisvaloper14uxdwplhhznclgaa350945tkyyw7e5e2f5sam5' },
+  { petal:2, moniker:'amitis-validator-2', earnings:'amitis125uguxqeyg5g5ut9av63d4r6y68h0q3f2ccxs6', valoper:'amitisvaloper1f4wrlrjzyxeavzz9n5dfgx4d4n0tsg8ysv7u4s' },
+  { petal:3, moniker:'amitis-validator-3', earnings:'amitis17hzth0glx85vem7d3mf25nv7xluhvhmpvashdk', valoper:'amitisvaloper14fmvjd4jmp3adgr97zqfnw3asgdr0efd0ctkw2' },
+  { petal:4, moniker:'amitis-validator-4', earnings:'amitis1y3kw3vmm9y5u7r5dtvu039547v59f5d99hjuhf', valoper:'amitisvaloper1sy2rqgl6ulvgtgp33qeeupvvunn8700lqcj8u9' },
+  { petal:5, moniker:'amitis-validator-5', earnings:'amitis1qgmv64lv2hrs9zp6svcx79dtk2h0uq89uejyuz', valoper:'amitisvaloper12qywa3pksm9k2y6g70zsjatw6mejxfp2xvh33p' },
+  { petal:6, moniker:'amitis-validator-6', earnings:'amitis19x2j0xvehycq8s2cqznzazkgdcc9kh8rpxp76r', valoper:'amitisvaloper1srn92hlpgvwfy6h9yfs2h3ujaenh3fmg75t7u7' },
+];
+
+// Known valoper addresses for all petals (fallback when registry validator_address is empty)
+const KNOWN_VALOPERS = {
+  1: 'amitisvaloper14uxdwplhhznclgaa350945tkyyw7e5e2f5sam5',
+  2: 'amitisvaloper1f4wrlrjzyxeavzz9n5dfgx4d4n0tsg8ysv7u4s',
+  3: 'amitisvaloper14fmvjd4jmp3adgr97zqfnw3asgdr0efd0ctkw2',
+  4: 'amitisvaloper1sy2rqgl6ulvgtgp33qeeupvvunn8700lqcj8u9',
+  5: 'amitisvaloper12qywa3pksm9k2y6g70zsjatw6mejxfp2xvh33p',
+  6: 'amitisvaloper1srn92hlpgvwfy6h9yfs2h3ujaenh3fmg75t7u7',
+  7: 'amitisvaloper187l63xnptfhufjyuk9snj5panr9tunmm7anu4q',
+  8: 'amitisvaloper1xcuskvk9s3kxh5uhmdzr3y4hawyqdah2d4uv4l',
+};
+
+// All known earnings wallets
+const EARNINGS_WALLETS = {
+  'amitisvaloper14uxdwplhhznclgaa350945tkyyw7e5e2f5sam5': 'amitis1mzzpffa8lzqwh0zry6yj57t7qzu43v3m88n5as',
+  'amitisvaloper1f4wrlrjzyxeavzz9n5dfgx4d4n0tsg8ysv7u4s': 'amitis125uguxqeyg5g5ut9av63d4r6y68h0q3f2ccxs6',
+  'amitisvaloper14fmvjd4jmp3adgr97zqfnw3asgdr0efd0ctkw2': 'amitis17hzth0glx85vem7d3mf25nv7xluhvhmpvashdk',
+  'amitisvaloper1sy2rqgl6ulvgtgp33qeeupvvunn8700lqcj8u9': 'amitis1y3kw3vmm9y5u7r5dtvu039547v59f5d99hjuhf',
+  'amitisvaloper12qywa3pksm9k2y6g70zsjatw6mejxfp2xvh33p': 'amitis1qgmv64lv2hrs9zp6svcx79dtk2h0uq89uejyuz',
+  'amitisvaloper1srn92hlpgvwfy6h9yfs2h3ujaenh3fmg75t7u7': 'amitis19x2j0xvehycq8s2cqznzazkgdcc9kh8rpxp76r',
+  'amitisvaloper187l63xnptfhufjyuk9snj5panr9tunmm7anu4q': 'amitis1zjr4as6p95dapyvsn9qes9m8yv39fawnrvwthm',
+  'amitisvaloper1xcuskvk9s3kxh5uhmdzr3y4hawyqdah2d4uv4l': 'amitis10qt3khhgreclek2nhpmf4gmc2krky2f7md57lj',
+};
+
+// Excluded from wallet rankings (system wallets)
+const EXCLUDED = new Set([
+  'amitis1clgvqc03f8atzn5z00x8jzx9nl4sv4q3dul5lu', // ecosystem fund
+  'amitis17xpfvakm2amg962yls6f84z3kell8c5lueqnvh', // fee collector
+  'amitis10d07y265gmmuvt4z0w9aw880jnsr700jkzsk3e', // governance
+  'amitis1fawax24n2vvudz3ddjuxthhqr2aqk2gtc8rm6s', // faucet
+  // earnings wallets
+  'amitis1mzzpffa8lzqwh0zry6yj57t7qzu43v3m88n5as',
+  'amitis125uguxqeyg5g5ut9av63d4r6y68h0q3f2ccxs6',
+  'amitis17hzth0glx85vem7d3mf25nv7xluhvhmpvashdk',
+  'amitis1y3kw3vmm9y5u7r5dtvu039547v59f5d99hjuhf',
+  'amitis1qgmv64lv2hrs9zp6svcx79dtk2h0uq89uejyuz',
+  'amitis19x2j0xvehycq8s2cqznzazkgdcc9kh8rpxp76r',
+  'amitis1zjr4as6p95dapyvsn9qes9m8yv39fawnrvwthm',
+  'amitis10qt3khhgreclek2nhpmf4gmc2krky2f7md57lj',
+  // validator signing keys
+  'amitis14uxdwplhhznclgaa350945tkyyw7e5e24zdfn6',
+  'amitis1f4wrlrjzyxeavzz9n5dfgx4d4n0tsg8yv6rga7',
+  'amitis14fmvjd4jmp3adgr97zqfnw3asgdr0efdnwkzxy',
+  'amitis1sy2rqgl6ulvgtgp33qeeupvvunn8700luw0n5t',
+  'amitis12qywa3pksm9k2y6g70zsjatw6mejxfp26629e0',
+  'amitis1srn92hlpgvwfy6h9yfs2h3ujaenh3fmgzzk25s',
+  'amitis187l63xnptfhufjyuk9snj5panr9tunmmztwgaw',
+  'amitis1xcuskvk9s3kxh5uhmdzr3y4hawyqdah23rpca3',
+]);
+
+function fmt(n,dec=2){return parseFloat(n).toLocaleString(undefined,{maximumFractionDigits:dec,minimumFractionDigits:dec});}
+function usd(a){return '$'+fmt(a*AMTS_PRICE);}
+function shortAddr(a,pre=10,suf=6){if(!a)return'—';return a.slice(0,pre)+'…'+a.slice(-suf);}
+function shortHash(h,pre=8,suf=6){if(!h)return'—';return h.slice(0,pre)+'…'+h.slice(-suf);}
+function timeAgo(iso){if(!iso)return'—';const d=(Date.now()-new Date(iso).getTime())/1000;if(d<60)return Math.floor(d)+'s';if(d<3600)return Math.floor(d/60)+'m';return Math.floor(d/3600)+'h';}
+
+function switchTab(name){
+  const names=['coop','petals','activity','network','protocol'];
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',names[i]===name));
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if(name==='petals'&&!window._petalsLoaded){loadPetals();window._petalsLoaded=true;}
+  if(name==='activity'){if(!window._activityLoaded){window._activityLoaded=true;}startLiveFeed();}else if(name==='graph'){initGraph();startGraphFeed();}else{stopLiveFeed();stopGraphFeed();}
+  if(name==='network'&&!window._networkLoaded){loadNetwork();window._networkLoaded=true;}
+  if(name==='protocol'&&!window._protocolLoaded){loadProtocol();window._protocolLoaded=true;}
+}
+
+// ── CO-OP TAB ────────────────────────────────────────────────────────────────
+async function loadCoop(){
+  try{
+    const [statusRes,poolRes,stakingRes,signingRes]=await Promise.all([
+      fetch(RPC+'/status').then(r=>r.json()),
+      fetch(REST+'/cosmos/distribution/v1beta1/community_pool').then(r=>r.json()),
+      fetch(REST+'/cosmos/staking/v1beta1/validators?status=BOND_STATUS_BONDED&pagination.limit=30').then(r=>r.json()),
+      fetch(REST+'/cosmos/slashing/v1beta1/signing_infos?pagination.limit=30').then(r=>r.json()).catch(()=>({})),
+    ]);
+    const height=parseInt(statusRes.result?.sync_info?.latest_block_height||0);
+    const bondedVals=stakingRes.validators||[];
+    // Build signing rate map indexed by valoper
+    // signing_infos returns entries in same order as staking validators
+    const signingByValoper={};
+    const sigInfos = signingRes.info||[];
+    // Match signing info to validators by consensus address
+    // Each signing info has an 'address' (consensus addr in valcons bech32)
+    // We query each validator's signing info individually using their consensus key
+    bondedVals.forEach((v,i)=>{
+      const info = sigInfos[i];
+      if(!info) return;
+      const missed=parseInt(info.missed_blocks_counter||0);
+      const startH=parseInt(info.start_height||0);
+      const window=Math.min(10000,height-startH);
+      const rate=window>0?Math.max(0,((window-missed)/window)*100):100;
+      signingByValoper[v.operator_address]=rate;
+    });
+    document.getElementById('navBlock').textContent='#'+height.toLocaleString();
+    document.getElementById('coopBlock').textContent='#'+height.toLocaleString();
+    document.getElementById('coopVals').textContent=bondedVals.length+' / 21';
+    document.getElementById('protoBlock').textContent='#'+height.toLocaleString();
+    document.getElementById('protoVals').textContent=bondedVals.length+' / 21';
+    const poolAmt=(poolRes.pool||[]).find(c=>c.denom==='uamts');
+    if(poolAmt){const v=parseFloat(poolAmt.amount)/1e6;document.getElementById('coopPool').textContent=fmt(v,0)+' AMTS';document.getElementById('protoPool').textContent=fmt(v,0)+' AMTS';}
+
+    const [earnR,outR]=await Promise.all([
+      Promise.all(COOP.map(v=>fetch(REST+'/cosmos/bank/v1beta1/balances/'+v.earnings).then(r=>r.json()).then(d=>{const b=(d.balances||[]).find(b=>b.denom==='uamts');return b?parseFloat(b.amount)/1e6:0;}).catch(()=>0))),
+      Promise.all(COOP.map(v=>fetch(REST+'/cosmos/distribution/v1beta1/validators/'+v.valoper+'/outstanding_rewards').then(r=>r.json()).then(d=>{const r=(d.rewards?.rewards||[]).find(r=>r.denom==='uamts');return r?parseFloat(r.amount)/1e6:0;}).catch(()=>0))),
+    ]);
+
+    const totalEarn=earnR.reduce((a,b)=>a+b,0);
+    const totalOut=outR.reduce((a,b)=>a+b,0);
+    const totalCombined=totalEarn+totalOut;
+    const perPetal=totalOut/COOP.length;
+
+    document.getElementById('coopOut').textContent=fmt(totalOut,4);
+    document.getElementById('coopOutUsd').textContent=usd(totalOut);
+    document.getElementById('coopEarn').textContent=fmt(totalEarn,4);
+    document.getElementById('coopEarnUsd').textContent=usd(totalEarn);
+    document.getElementById('coopTotal').textContent=fmt(totalCombined,3);
+    document.getElementById('coopTotalUsd').textContent=usd(totalCombined);
+    document.getElementById('coopPer').textContent=fmt(perPetal,4);
+    document.getElementById('coopPerUsd').textContent=usd(perPetal);
+    document.getElementById('coopRebate').textContent=fmt(totalEarn*4,0);
+    document.getElementById('coopRebateUsd').textContent=usd(totalEarn*4)+' rebated by group';
+    document.getElementById('coopSumOut').textContent=fmt(totalOut,4)+' AMTS ('+usd(totalOut)+')';
+    document.getElementById('coopSumEarn').textContent=fmt(totalEarn,4)+' AMTS';
+    document.getElementById('coopSumTotal').textContent=fmt(totalCombined,4)+' AMTS ('+usd(totalCombined)+')';
+
+    const html=COOP.map((v,i)=>{
+      const earn=earnR[i],out=outR[i];
+      const cv=bondedVals.find(x=>x.operator_address===v.valoper);
+      const moniker=cv?.description?.moniker||v.moniker;
+      const commission=cv?(parseFloat(cv.commission?.commission_rates?.rate||0)*100).toFixed(2)+'%':'—';
+      const jailed=cv?.jailed;
+      const isActive=!!cv&&!jailed;
+      const signRate = cv ? (signingByValoper[cv.operator_address] ?? null) : null;
+      const signRateDisplay = signRate!==null
+        ? `<div class="sign-rate ${signRate>=99?'good':signRate>=95?'warn':'bad'}">${signRate.toFixed(1)}%</div><div class="sign-bar-wrap"><div class="sign-bar" style="width:${signRate.toFixed(1)}%;background:${signRate>=99?'var(--green)':signRate>=95?'var(--gold)':'var(--red)'}"></div></div>`
+        : '<div class="sign-rate" style="color:var(--dim)">—</div>';
+      return`<div class="val-row">
+        <div class="val-petal">${v.petal}</div>
+        <div><div class="val-name">${moniker}</div><div class="val-addr">${shortAddr(v.earnings)}</div></div>
+        <div><div class="val-amts">${fmt(earn,4)} AMTS</div><div class="val-usd">${usd(earn)}</div></div>
+        <div><div class="val-amts gold">${fmt(out,4)} AMTS</div><div class="val-usd">${usd(out)}</div></div>
+        <div><div class="val-amts">${usd(earn+out)}</div><div class="val-usd">Commission: ${commission}</div></div>
+        <div>${signRateDisplay}</div>
+        <div class="val-status"><div class="status-dot${jailed?' red':''}"></div><span class="status-txt${jailed?' red':''}">${jailed?'Jailed':isActive?'Active':'Offline'}</span></div>
+      </div>`;
+    }).join('');
+    document.getElementById('coopRows').innerHTML=html;
+    document.getElementById('coopMeta').textContent='Updated '+new Date().toLocaleTimeString();
+
+    // Earnings projection
+    try {
+      // We need to know the rate of accumulation
+      // Use: unclaimed rewards per petal / time since last claim
+      // Approximate: use block height to estimate time
+      // Avg block time ~6s -> blocks per day = 86400/6 = 14400
+      const avgBlockTimeSec = 6;
+      const blocksPerDay = Math.round(86400 / avgBlockTimeSec);
+      const blocksPerMonth = blocksPerDay * 30;
+      const blocksPerYear = blocksPerDay * 365;
+
+      // Rate: use total outstanding rewards / chain age since validators started
+      // Better: use earnings wallet balance as accumulated total since start
+      // Assume validators started around block 1 and current height is known
+      const chainAge = height; // blocks since genesis
+      if (chainAge > 0 && totalOut > 0) {
+        // Rate per block per petal
+        const avgOut = totalOut / COOP.length;
+        const avgEarn = totalEarn / COOP.length;
+        const totalPerPetal = avgOut + avgEarn;
+        // Rate: totalPerPetal accumulated over chainAge blocks
+        const ratePerBlock = totalEarn / COOP.length / chainAge;
+        const monthlyPerPetal = ratePerBlock * blocksPerMonth;
+        const yearlyPerPetal = ratePerBlock * blocksPerYear;
+        const monthlyGroup = monthlyPerPetal * COOP.length;
+        const roiPct = (yearlyPerPetal * AMTS_PRICE / 2_500_000) * 100;
+
+        const tpm = parseFloat(document.getElementById('txsPerMin')?.textContent || '0') || 0;
+        const txsPerDay = tpm * 60 * 24;
+
+        document.getElementById('projPerPetalMonth').textContent = fmt(monthlyPerPetal, 0);
+        document.getElementById('projPerPetalMonthUsd').textContent = usd(monthlyPerPetal);
+        document.getElementById('projGroupMonth').textContent = fmt(monthlyGroup, 0);
+        document.getElementById('projGroupMonthUsd').textContent = usd(monthlyGroup);
+        document.getElementById('projPerPetalYear').textContent = fmt(yearlyPerPetal, 0);
+        document.getElementById('projPerPetalYearUsd').textContent = usd(yearlyPerPetal);
+        document.getElementById('projBlocksDay').textContent = blocksPerDay.toLocaleString();
+        document.getElementById('projTxsDay').textContent = txsPerDay > 0 ? fmt(txsPerDay, 0) : '—';
+        document.getElementById('projTxsDaySub').textContent = tpm > 0 ? `${tpm} txs/min current rate` : 'open Chain Activity tab first';
+        document.getElementById('projRoi').textContent = roiPct.toFixed(2) + '%';
+        document.getElementById('projRoiSub').textContent = usd(yearlyPerPetal) + ' / year vs $2.5M cost';
+        document.getElementById('projMeta').textContent = `based on ${fmt(chainAge,0)} blocks of history · updated ${new Date().toLocaleTimeString()}`;
+      }
+    } catch(e) { console.error('projection:', e); }
+  }catch(e){console.error('loadCoop:',e);document.getElementById('coopRows').innerHTML='<div class="loading" style="color:var(--muted)">Error loading — retrying…</div>';}
+}
+
+// ── ALL PETALS TAB ───────────────────────────────────────────────────────────
+async function loadPetals(){
+  try{
+    const [petalRes,stakingRes]=await Promise.all([
+      fetch(REST+'/amitis/petalregistry/v1/petals').then(r=>r.json()),
+      fetch(REST+'/cosmos/staking/v1beta1/validators?status=BOND_STATUS_BONDED&pagination.limit=30').then(r=>r.json()),
+    ]);
+    const petals=(petalRes.petals||[]).sort((a,b)=>parseInt(a.id)-parseInt(b.id));
+    const bondedVals=stakingRes.validators||[];
+    const bondedAddrs=new Set(bondedVals.map(v=>v.operator_address));
+    const petalMap={};
+    petals.forEach(p=>{petalMap[parseInt(p.id)]=p;});
+
+    const activePetals=petals.filter(p=>bondedAddrs.has(p.validator_address||(KNOWN_VALOPERS[parseInt(p.id)]||'')));
+    const [earnR,outR]=await Promise.all([
+      Promise.all(activePetals.map(p=>{
+        const va=p.validator_address||KNOWN_VALOPERS[parseInt(p.id)]||''; const w=EARNINGS_WALLETS[va];
+        if(!w)return Promise.resolve(0);
+        return fetch(REST+'/cosmos/bank/v1beta1/balances/'+w).then(r=>r.json()).then(d=>{const b=(d.balances||[]).find(b=>b.denom==='uamts');return b?parseFloat(b.amount)/1e6:0;}).catch(()=>0);
+      })),
+      Promise.all(activePetals.map(p=>fetch(REST+'/cosmos/distribution/v1beta1/validators/'+(p.validator_address||KNOWN_VALOPERS[parseInt(p.id)]||p.validator_address)+'/outstanding_rewards').then(r=>r.json()).then(d=>{const r=(d.rewards?.rewards||[]).find(r=>r.denom==='uamts');return r?parseFloat(r.amount)/1e6:0;}).catch(()=>0))),
+    ]);
+    const earnMap={},outMap={};
+    activePetals.forEach((p,i)=>{const va=p.validator_address||KNOWN_VALOPERS[parseInt(p.id)]||'';earnMap[va]=earnR[i];outMap[va]=outR[i];});
+
+    let html='';
+    for(let slot=1;slot<=21;slot++){
+      const p=petalMap[slot],flower=FLOWER_NAMES[slot-1];
+      if(!p){
+        html+=`<div class="petal-row faded"><div class="petal-badge available">${slot}</div><div><div class="petal-flower">${flower}</div><div class="petal-moniker" style="color:var(--dim)">Coming soon</div></div><div style="font-family:var(--mono);font-size:11px;color:var(--dimmer)">—</div><div style="font-family:var(--mono);font-size:11px;color:var(--dimmer)">—</div><div style="font-family:var(--mono);font-size:11px;color:var(--dimmer)">—</div><div><span class="status-pill available">Available</span></div></div>`;
+        continue;
+      }
+      // Use known valoper as fallback if registry validator_address is empty
+      const valAddr = p.validator_address || KNOWN_VALOPERS[parseInt(p.id)] || '';
+      const isActive=bondedAddrs.has(valAddr);
+      const cv=bondedVals.find(v=>v.operator_address===valAddr);
+      const jailed=cv?.jailed;
+      const moniker=cv?.description?.moniker||('Petal #'+slot);
+      const earn=earnMap[valAddr]||0;
+      const out=outMap[valAddr]||0;
+      const w=EARNINGS_WALLETS[valAddr];
+      const badgeCls=jailed?'pending':isActive?'active':'pending';
+      const rowCls=isActive&&!jailed?'':'faded';
+      const pillCls=jailed?'jailed':isActive?'active':'pending';
+      const pillLbl=jailed?'Jailed':isActive?'Active':'Pending';
+      html+=`<div class="petal-row ${rowCls}">
+        <div class="petal-badge ${badgeCls}">${slot}</div>
+        <div><div class="petal-flower">${flower}</div><div class="petal-moniker">${moniker}</div><div class="petal-addr">${shortAddr(p.validator_address,14,6)}</div></div>
+        <div>${w?`<div class="petal-amts">${fmt(earn,4)} AMTS</div><div class="petal-usd">${shortAddr(w)}</div>`:'<div style="font-family:var(--mono);font-size:11px;color:var(--dimmer)">—</div>'}</div>
+        <div>${isActive?`<div class="petal-amts gold">${fmt(out,4)} AMTS</div><div class="petal-usd">${usd(out)}</div>`:'<div style="font-family:var(--mono);font-size:11px;color:var(--dimmer)">—</div>'}</div>
+        <div>${isActive?`<div class="petal-amts">${usd(earn+out)}</div>`:'<div style="font-family:var(--mono);font-size:11px;color:var(--dimmer)">—</div>'}</div>
+        <div><span class="status-pill ${pillCls}">${pillLbl}</span></div>
+      </div>`;
+    }
+    document.getElementById('petalRows').innerHTML=html;
+    document.getElementById('petalMeta').textContent='Updated '+new Date().toLocaleTimeString();
+  }catch(e){console.error('loadPetals:',e);}
+}
+
+// ── LIVE POLLING ─────────────────────────────────────────────────────────────
+let _liveInterval = null;
+let _lastBlockHeight = 0;
+let _blockTimes = [];
+let _recentTxCounts = [];
+
+async function startLiveFeed() {
+  if (_liveInterval) return;
+  await loadActivity();
+  _liveInterval = setInterval(async () => {
+    await liveTickBlocks();
+    await liveFetchTxs();
+  }, 5000);
+}
+
+function stopLiveFeed() {
+  if (_liveInterval) { clearInterval(_liveInterval); _liveInterval = null; }
+}
+
+async function liveTickBlocks() {
+  try {
+    const s = await fetch(RPC+'/status').then(r=>r.json());
+    const h = parseInt(s.result?.sync_info?.latest_block_height||0);
+    if (h === _lastBlockHeight) return;
+
+    // Flash the nav block
+    const navEl = document.getElementById('navBlock');
+    navEl.classList.add('flash');
+    setTimeout(()=>navEl.classList.remove('flash'), 200);
+    navEl.textContent = '#' + h.toLocaleString();
+    document.getElementById('protoBlock').textContent = '#' + h.toLocaleString();
+    document.getElementById('coopBlock').textContent = '#' + h.toLocaleString();
+
+    // Fetch new blocks since last check
+    const newBlocks = [];
+    for (let bh = h; bh > _lastBlockHeight && bh > h - 5; bh--) {
+      const bd = await fetch(RPC+'/block?height='+bh).then(r=>r.json()).catch(()=>null);
+      if (!bd?.result) continue;
+      const time = bd.result.block?.header?.time || '';
+      newBlocks.push({
+        height: bh,
+        hash: bd.result.block_id?.hash || '',
+        time,
+        txCount: bd.result.block?.data?.txs?.length || 0,
+      });
+      if (time && _blockTimes.length > 0) {
+        const diff = (new Date(time) - new Date(_blockTimes[_blockTimes.length-1])) / 1000;
+        if (diff > 0 && diff < 30) _blockTimes.push(new Date(time));
+      } else if (time) {
+        _blockTimes.push(new Date(time));
+      }
+      _recentTxCounts.push(bd.result.block?.data?.txs?.length || 0);
+    }
+    if (_blockTimes.length > 20) _blockTimes = _blockTimes.slice(-20);
+    if (_recentTxCounts.length > 20) _recentTxCounts = _recentTxCounts.slice(-20);
+
+    // Update stats bar
+    if (_blockTimes.length >= 2) {
+      const times = _blockTimes.slice(-10);
+      const diffs = [];
+      for (let i = 1; i < times.length; i++) diffs.push((times[i] - times[i-1])/1000);
+      const avgTime = diffs.reduce((a,b)=>a+b,0)/diffs.length;
+      document.getElementById('avgBlockTime').textContent = avgTime.toFixed(1)+'s';
+      document.getElementById('blocksPerMin').textContent = (60/avgTime).toFixed(1);
+    }
+    const avgTxs = _recentTxCounts.length ? _recentTxCounts.reduce((a,b)=>a+b,0)/_recentTxCounts.length : 0;
+    document.getElementById('txsPerMin').textContent = (avgTxs * (60/6)).toFixed(0);
+
+    // Prepend new blocks to list
+    if (newBlocks.length > 0) {
+      const container = document.getElementById('blockRows');
+      const existing = container.innerHTML === '<div class="loading"><div class="spinner"></div>Loading…</div>' ? '' : container.innerHTML;
+      const newHtml = newBlocks.map(b=>`
+        <div class="chain-row block-cols">
+          <div class="cr-height">#${b.height.toLocaleString()}</div>
+          <div class="cr-hash">${shortHash(b.hash,10,8)}</div>
+          <div class="cr-count">${b.txCount}</div>
+          <div class="cr-age">${timeAgo(b.time)}</div>
+        </div>`).join('');
+      container.innerHTML = newHtml + existing;
+      // Trim to 100 rows
+      const rows = container.querySelectorAll('.chain-row');
+      if (rows.length > 100) Array.from(rows).slice(100).forEach(r=>r.remove());
+      document.getElementById('blocksMeta').textContent = 'Latest #' + h.toLocaleString();
+    }
+    _lastBlockHeight = h;
+  } catch(e) { console.error('liveTickBlocks:', e); }
+}
+
+async function liveFetchTxs() {
+  try {
+    const minH = Math.max(1, _lastBlockHeight - 100);
+    const txRes = await fetch(`${API}/rpc?endpoint=tx_search&query=%22tx.height%3E${minH}%22&per_page=25&order_by=%22desc%22`).then(r=>r.json()).catch(()=>({}));
+    const txs = txRes.result?.txs || [];
+    document.getElementById('txsMeta').textContent = (txRes.result?.total_count||txs.length).toLocaleString() + ' total';
+
+    const html = txs.map(tx => {
+      const ok=(tx.tx_result?.code||0)===0;
+      const evts=tx.tx_result?.events||[];
+      const evtTypes=evts.map(e=>e.type);
+      let type='Transfer';
+      if(evtTypes.some(t=>t.includes('ibc')||t==='send_packet'))type='IBC';
+      else if(evtTypes.some(t=>['execute','instantiate','wasm'].includes(t)))type='Contract';
+      else if(evtTypes.some(t=>['proposal_vote','submit_proposal'].includes(t)))type='Governance';
+      else if(evtTypes.some(t=>['withdraw_rewards','withdraw_commission'].includes(t)))type='Withdraw';
+      let amount='—';
+      const tf=evts.find(e=>e.type==='transfer');
+      if(tf){const aa=tf.attributes?.find(a=>a.key==='amount');if(aa?.value?.includes('uamts')){const n=parseInt(aa.value.replace('uamts',''));if(!isNaN(n))amount=(n/1e6).toFixed(2)+' AMTS';}}
+      return `<div class="tx-feed-row" onclick='openTxModal("${tx.hash}","${tx.height}",${tx.tx_result?.code||0},${JSON.stringify(evts)})'>
+        <div class="${ok?'cr-ok':'cr-err'}">${ok?'✓':'✗'}</div>
+        <div class="cr-hash">${shortHash(tx.hash,10,8)}</div>
+        <div class="cr-type">${type}</div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--green);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${amount}</div>
+        <div class="cr-age">#${parseInt(tx.height).toLocaleString()}</div>
+      </div>`;
+    }).join('');
+    document.getElementById('txRows').innerHTML = html || '<div class="loading" style="color:var(--dimmer)">No transactions yet</div>';
+  } catch(e) { console.error('liveFetchTxs:', e); }
+}
+
+// ── ACTIVITY TAB ─────────────────────────────────────────────────────────────
+async function loadActivity(){
+  try{
+    const statusRes=await fetch(RPC+'/status').then(r=>r.json());
+    const latest=parseInt(statusRes.result?.sync_info?.latest_block_height||0);
+    document.getElementById('blocksMeta').textContent='Latest #'+latest.toLocaleString();
+    const heights=Array.from({length:50},(_,i)=>latest-i).filter(h=>h>0);
+    const allBlocks=[];
+    for(let i=0;i<heights.length;i+=10){
+      const batch=heights.slice(i,i+10);
+      const results=await Promise.all(batch.map(h=>fetch(RPC+'/block?height='+h).then(r=>r.json()).catch(()=>null)));
+      results.filter(Boolean).forEach(d=>{if(d.result)allBlocks.push({height:parseInt(d.result.block?.header?.height||0),hash:d.result.block_id?.hash||'',time:d.result.block?.header?.time||'',txCount:d.result.block?.data?.txs?.length||0});});
+    }
+    document.getElementById('blockRows').innerHTML=allBlocks.filter(b=>b.height>0).map(b=>`<div class="chain-row block-cols"><div class="cr-height">#${b.height.toLocaleString()}</div><div class="cr-hash">${shortHash(b.hash,10,8)}</div><div class="cr-count">${b.txCount}</div><div class="cr-age">${timeAgo(b.time)}</div></div>`).join('')||'<div class="loading" style="color:var(--dimmer)">No blocks</div>';
+    const minH=Math.max(1,latest-500);
+    const txRes=await fetch(`${API}/rpc?endpoint=tx_search&query=%22tx.height%3E${minH}%22&per_page=25&order_by=%22desc%22`).then(r=>r.json()).catch(()=>({}));
+    const txs=txRes.result?.txs||[];
+    document.getElementById('txsMeta').textContent=(txRes.result?.total_count||txs.length).toLocaleString()+' total';
+    document.getElementById('txRows').innerHTML=txs.map(tx=>{
+      const ok=(tx.tx_result?.code||0)===0;
+      const evts=tx.tx_result?.events||[];
+      const evtTypes=evts.map(e=>e.type);
+      let type='Transfer';
+      if(evtTypes.some(t=>t.includes('ibc')||t==='send_packet'))type='IBC';
+      else if(evtTypes.some(t=>['execute','instantiate','wasm'].includes(t)))type='Contract';
+      else if(evtTypes.some(t=>['proposal_vote','submit_proposal'].includes(t)))type='Governance';
+      else if(evtTypes.some(t=>['withdraw_rewards','withdraw_commission'].includes(t)))type='Withdraw';
+      let amount='—';
+      const tf=evts.find(e=>e.type==='transfer');
+      if(tf){const aa=tf.attributes?.find(a=>a.key==='amount');if(aa?.value?.includes('uamts')){const n=parseInt(aa.value.replace('uamts',''));if(!isNaN(n))amount=(n/1e6).toFixed(2)+' AMTS';}}
+      return`<div class="chain-row tx-cols" style="cursor:pointer" onclick='openTxModal("${tx.hash}","${tx.height}",${tx.tx_result?.code||0},${JSON.stringify(evts)})'>
+        <div class="${ok?'cr-ok':'cr-err'}">${ok?'✓':'✗'}</div>
+        <div class="cr-hash">${shortHash(tx.hash,10,8)}</div>
+        <div class="cr-type">${type}</div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--green);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${amount}</div>
+        <div class="cr-age">#${parseInt(tx.height).toLocaleString()}</div>
+      </div>`;
+    }).join('')||'<div class="loading" style="color:var(--dimmer)">No transactions yet</div>';
+  }catch(e){console.error('loadActivity:',e);}
+}
+
+// ── NETWORK STATS TAB ────────────────────────────────────────────────────────
+async function loadNetwork(){
+  try{
+    // Fetch cached stats once for both HRB and GRMLAB
+    const statsRes = await fetch(`${API}/stats`).then(r=>r.json()).catch(()=>({}));
+    const hrb = statsRes.hrb || {};
+    document.getElementById('hrbBal').textContent=hrb.balance_amts?fmt(hrb.balance_amts,0):'—';
+    document.getElementById('hrbSpent').textContent=hrb.total_volume_amts?fmt(hrb.total_volume_amts,0):'—';
+    document.getElementById('hrbSpentSub').textContent=hrb.estimated?'AMTS sent (est.)':'AMTS sent';
+    document.getElementById('hrbUsd').textContent=hrb.total_volume_usd?'$'+fmt(hrb.total_volume_usd,0):'—';
+    document.getElementById('hrbTxCount').textContent=hrb.total_txs?hrb.total_txs.toLocaleString():'—';
+    document.getElementById('hrbUpdated').textContent=statsRes.updated_at?'updated '+new Date(statsRes.updated_at).toLocaleTimeString():'—';
+
+    // GRMLAB stats from cache
+    const grmlabStats = statsRes?.grmlab || {};
+    document.getElementById('grmlabTxs').textContent = grmlabStats.total_txs ? grmlabStats.total_txs.toLocaleString() : '—';
+    document.getElementById('grmlabVal').textContent = grmlabStats.network_total_txs ? grmlabStats.network_total_txs.toLocaleString() : '—';
+    document.getElementById('grmlabUpdated').textContent = statsRes?.updated_at ? 'updated '+new Date(statsRes.updated_at).toLocaleTimeString() : '—';
+
+    // Recent txs for wallet stats + whale watch
+    const statusRes=await fetch(RPC+'/status').then(r=>r.json());
+    const latest=parseInt(statusRes.result?.sync_info?.latest_block_height||0);
+    const minH=Math.max(1,latest-10000);
+    document.getElementById('topTxMeta').textContent=`blocks ${minH.toLocaleString()}–${latest.toLocaleString()}`;
+
+    const txRes=await fetch(`${API}/rpc?endpoint=tx_search&query=%22tx.height%3E${minH}%22&per_page=100&order_by=%22desc%22`).then(r=>r.json()).catch(()=>({}));
+    const txs=txRes.result?.txs||[];
+    const whales=[];
+
+    txs.forEach(tx=>{
+      const evts=tx.tx_result?.events||[];
+      const tf=evts.find(e=>e.type==='transfer');
+      if(!tf)return;
+      const amt=tf.attributes?.find(a=>a.key==='amount')?.value;
+      if(amt?.includes('uamts')){
+        const n=parseInt(amt.replace('uamts',''));
+        if(!isNaN(n)&&n/1e6>=WHALE_THRESHOLD){
+          const sender=tf.attributes?.find(a=>a.key==='sender')?.value;
+          const recipient=tf.attributes?.find(a=>a.key==='recipient')?.value;
+          whales.push({block:parseInt(tx.height),sender,recipient,amount:n/1e6,time:null});
+        }
+      }
+    });
+
+    // Top 20 by tx count — from backend cache
+    const topWallets = statsRes.top_wallets || [];
+    const maxTx = topWallets[0]?.tx_count || 1;
+    document.getElementById('topTxRows').innerHTML=topWallets.map((w,i)=>`
+      <div class="rank-row">
+        <div class="rank-num">${i+1}</div>
+        <div><div class="rank-addr">${w.address}</div><div class="rank-bar-wrap"><div class="rank-bar" style="width:${(w.tx_count/maxTx*100).toFixed(1)}%;background:var(--green)"></div></div></div>
+        <div><div class="rank-val">${w.tx_count}</div><div class="rank-usd">transactions</div></div>
+      </div>
+    `).join('')||'<div class="loading" style="color:var(--dimmer)">Loading from cache…</div>';
+    document.getElementById('topTxMeta').textContent=`last 10,000 blocks · ${topWallets.length} wallets`;
+
+    // Top 20 by balance — use top_wallets addresses from cache
+    const topWalletAddrs = (statsRes.top_wallets||[]).map(w=>w.address);
+    const balResults=await Promise.all(topWalletAddrs.map(a=>fetch(REST+'/cosmos/bank/v1beta1/balances/'+a).then(r=>r.json()).then(d=>{const b=(d.balances||[]).find(b=>b.denom==='uamts');return{addr:a,bal:b?parseFloat(b.amount)/1e6:0};}).catch(()=>({addr:a,bal:0}))));
+    const topBal=balResults.filter(x=>x.bal>0).sort((a,b)=>b.bal-a.bal).slice(0,20);
+    const maxBal=topBal[0]?.bal||1;
+    document.getElementById('topBalRows').innerHTML=topBal.map(({addr,bal},i)=>`
+      <div class="rank-row">
+        <div class="rank-num">${i+1}</div>
+        <div><div class="rank-addr">${addr}</div><div class="rank-bar-wrap"><div class="rank-bar" style="width:${(bal/maxBal*100).toFixed(1)}%;background:var(--gold)"></div></div></div>
+        <div><div class="rank-val" style="color:var(--gold)">${fmt(bal,0)}</div><div class="rank-usd">${usd(bal)}</div></div>
+      </div>
+    `).join('')||'<div class="loading" style="color:var(--dimmer)">Loading from cache…</div>';
+    document.getElementById('topBalMeta').textContent=topBal.length+' wallets';
+
+    // Fee rebate leaderboard
+    const rebates = statsRes.rebate_leaderboard || [];
+    const maxRebate = rebates[0]?.rebate_amts || 1;
+    // Network Health Score
+    try {
+      // 1. Block time score (target 6s, penalize deviation)
+      let blockTimeScore = 34;
+      const avgBT = parseFloat(document.getElementById('avgBlockTime')?.textContent || '6');
+      if (!isNaN(avgBT) && avgBT > 0) {
+        const deviation = Math.abs(avgBT - 6) / 6;
+        blockTimeScore = Math.max(0, Math.round(25 * (1 - deviation * 2)));
+      }
+
+      // 2. Signing rate score (from co-op validators, extrapolate)
+      let signingScore = 33;
+      const signEls = document.querySelectorAll('.sign-rate');
+      if (signEls.length > 0) {
+        const rates = Array.from(signEls).map(el => parseFloat(el.textContent)).filter(n => !isNaN(n));
+        if (rates.length > 0) {
+          const avgRate = rates.reduce((a,b)=>a+b,0)/rates.length;
+          signingScore = Math.round((avgRate / 100) * 33);
+        }
+      }
+
+      // 3. Tx volume trend score (is recent volume > baseline)
+      let volumeScore = 33;
+      const txsPerMinEl = document.getElementById('txsPerMin');
+      if (txsPerMinEl && txsPerMinEl.textContent !== '—') {
+        const tpm = parseFloat(txsPerMinEl.textContent);
+        // Good if > 5 txs/min, great if > 20
+        volumeScore = Math.min(33, Math.round((tpm / 20) * 33));
+      }
+
+      // 4. Active validators score (8/21 = good, more = better)
+      const total = blockTimeScore + signingScore + volumeScore;
+      const grade = total >= 90 ? 'Excellent' : total >= 75 ? 'Good' : total >= 60 ? 'Fair' : 'Poor';
+      const color = total >= 90 ? 'var(--green)' : total >= 75 ? 'var(--blue)' : total >= 60 ? 'var(--gold)' : 'var(--red)';
+
+      document.getElementById('healthScoreNum').textContent = total;
+      document.getElementById('healthScoreNum').style.color = color;
+      document.getElementById('healthScoreGrade').textContent = grade;
+      document.getElementById('healthScoreGrade').style.color = color;
+      document.getElementById('healthScoreMeta').textContent = `composite score · ${new Date().toLocaleTimeString()}`;
+
+      const setComponent = (barId, scoreId, score, max) => {
+        const pct = (score/max*100).toFixed(1);
+        const c = score >= max*0.9 ? 'var(--green)' : score >= max*0.7 ? 'var(--blue)' : score >= max*0.5 ? 'var(--gold)' : 'var(--red)';
+        document.getElementById(barId).style.width = pct+'%';
+        document.getElementById(barId).style.background = c;
+        document.getElementById(scoreId).textContent = score+'/'+max;
+        document.getElementById(scoreId).style.color = c;
+      };
+      setComponent('hcBlockTime','hcBlockTimeScore',blockTimeScore,34);
+      setComponent('hcSigning','hcSigningScore',signingScore,33);
+      setComponent('hcVolume','hcVolumeScore',volumeScore,33);
+    } catch(e) { console.error('healthScore:', e); }
+
+    // Velocity alerts
+    const velocity = statsRes.velocity_alerts || [];
+    document.getElementById('velocityMeta').textContent = velocity.length > 0
+      ? `${velocity.length} wallet${velocity.length>1?'s':''} spiking above normal`
+      : 'No unusual activity detected';
+    document.getElementById('velocityRows').innerHTML = velocity.length > 0
+      ? velocity.map(v => `
+        <div class="velocity-row">
+          <div class="velocity-addr">${v.address}</div>
+          <div class="velocity-mult">${v.multiplier}x</div>
+          <div class="velocity-recent">${v.recent_txs} txs<br><span style="font-size:9px;color:var(--dim)">last 100 blocks</span></div>
+          <div class="velocity-base">${v.baseline_txs} txs<br><span style="font-size:9px;color:var(--dim)">prior 900 blocks</span></div>
+        </div>
+      `).join('')
+      : '<div class="loading" style="color:var(--green);padding:20px">✓ All wallets within normal activity range</div>';
+
+    // New wallet radar
+    const newWallets = statsRes.new_wallets || [];
+    document.getElementById('newWalletMeta').textContent = `${newWallets.length} new wallets in last 24h`;
+    document.getElementById('newWalletRows').innerHTML = newWallets.map(w => `
+      <div class="new-wallet-row">
+        <div class="new-wallet-addr">${w.address}</div>
+        <div class="new-wallet-block">#${w.first_block.toLocaleString()}</div>
+        <div class="new-wallet-bal">${fmt(w.balance_amts,2)} AMTS</div>
+        <div class="new-wallet-txs">${w.tx_count} txs</div>
+      </div>
+    `).join('') || '<div class="loading" style="color:var(--dimmer)">No new wallets detected</div>';
+
+    document.getElementById('rebateRows').innerHTML = rebates.map((r,i) => `
+      <div class="rank-row">
+        <div class="rank-num">${i+1}</div>
+        <div>
+          <div class="rank-addr">${r.address}</div>
+          <div class="rank-bar-wrap"><div class="rank-bar" style="width:${(r.rebate_amts/maxRebate*100).toFixed(1)}%;background:var(--blue)"></div></div>
+        </div>
+        <div>
+          <div class="rank-val" style="color:var(--blue)">${fmt(r.rebate_amts,4)}</div>
+          <div class="rank-usd">${'$'+fmt(r.rebate_usd,2)} rebated</div>
+        </div>
+      </div>
+    `).join('') || '<div class="loading" style="color:var(--dimmer)">Loading from cache…</div>';
+
+    // Whale watch
+    document.getElementById('whaleRows').innerHTML=whales.slice(0,10).map(w=>`
+      <div class="whale-row">
+        <div class="whale-block">#${w.block.toLocaleString()}</div>
+        <div class="whale-addrs">${shortAddr(w.sender,8,4)} → ${shortAddr(w.recipient,8,4)}</div>
+        <div class="whale-amt">${fmt(w.amount,0)} AMTS</div>
+        <div class="whale-age">${usd(w.amount)}</div>
+      </div>
+    `).join('')||'<div class="loading" style="color:var(--dimmer)">No whale transactions in recent blocks</div>';
+
+    // Charts
+    loadCharts(latest);
+  }catch(e){console.error('loadNetwork:',e);}
+}
+
+async function loadCharts(latest){
+  try{
+    if(!latest){const s=await fetch(RPC+'/status').then(r=>r.json());latest=parseInt(s.result?.sync_info?.latest_block_height||0);}
+    const heights=Array.from({length:30},(_,i)=>latest-(29-i));
+    const [blocks,results]=await Promise.all([
+      Promise.all(heights.map(h=>fetch(RPC+'/block?height='+h).then(r=>r.json()).catch(()=>null))),
+      Promise.all(heights.map(h=>fetch(RPC+'/block_results?height='+h).then(r=>r.json()).catch(()=>null))),
+    ]);
+    const txCounts=blocks.map(d=>d?.result?.block?.data?.txs?.length||0);
+    const fees=results.map(d=>{
+      let t=0;
+      (d?.result?.txs_results||[]).forEach(tx=>{(tx.events||[]).forEach(evt=>{if(evt.type==='tx')(evt.attributes||[]).forEach(a=>{if(a.key==='fee'&&a.value?.includes('uamts')){const n=parseInt(a.value.replace('uamts',''));if(!isNaN(n))t+=(n*0.20/1e6)*(6/21);}});});});
+      return t;
+    });
+    const avgFee=fees.reduce((a,b)=>a+b,0)/fees.length;
+    const avgTx=txCounts.reduce((a,b)=>a+b,0)/txCounts.length;
+    document.getElementById('feeChartStat').textContent='avg '+avgFee.toFixed(4)+' AMTS/block (6/21)';
+    document.getElementById('txChartStat').textContent='avg '+avgTx.toFixed(1)+' tx/block';
+    drawBars('feeChart',fees,'#4ade80');
+    drawBars('txChart',txCounts,'#60a5fa');
+  }catch(e){console.error('loadCharts:',e);}
+}
+
+function drawBars(id,data,color){
+  const c=document.getElementById(id);if(!c)return;
+  const W=c.offsetWidth||400,H=90;c.width=W;c.height=H;
+  const ctx=c.getContext('2d');ctx.clearRect(0,0,W,H);
+  if(!data.length)return;
+  const max=Math.max(...data,0.001),gap=3,bw=Math.max(2,(W-gap*(data.length-1))/data.length);
+  data.forEach((v,i)=>{
+    const x=i*(bw+gap),bh=Math.max(2,(v/max)*(H-8)),y=H-bh,last=i===data.length-1;
+    const g=ctx.createLinearGradient(0,y,0,H);
+    g.addColorStop(0,last?color:color+'66');g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=g;ctx.beginPath();
+    if(ctx.roundRect)ctx.roundRect(x,y,bw,bh,[2,2,0,0]);else ctx.rect(x,y,bw,bh);
+    ctx.fill();if(last){ctx.fillStyle=color;ctx.fillRect(x,y,bw,2);}
+  });
+  ctx.strokeStyle='rgba(255,255,255,0.05)';ctx.beginPath();ctx.moveTo(0,H-0.5);ctx.lineTo(W,H-0.5);ctx.stroke();
+}
+
+// ── PROTOCOL TAB ─────────────────────────────────────────────────────────────
+async function loadProtocol(){
+  try{
+    const SWAP='amitis1f6jlx7d9y408tlzue7r2qcf79plp549n30yzqjajjud8vm7m4vdspgrfqp';
+    const [swapS,swapR,samtsR,chanR,govR]=await Promise.all([
+      fetch(REST+'/cosmwasm/wasm/v1/contract/'+SWAP+'/smart/'+btoa('{"state":{}}')).then(r=>r.json()).catch(()=>({})),
+      fetch(REST+'/cosmwasm/wasm/v1/contract/'+SWAP+'/smart/'+btoa('{"reserve":{}}')).then(r=>r.json()).catch(()=>({})),
+      fetch(REST+'/amitis/samts/v1/pool').then(r=>r.json()).catch(()=>({})),
+      fetch(REST+'/ibc/core/channel/v1/channels').then(r=>r.json()).catch(()=>({})),
+      fetch(REST+'/cosmos/gov/v1/proposals?pagination.limit=10').then(r=>r.json()).catch(()=>({})),
+    ]);
+    const s=swapS.data||{},r=swapR.data||{};
+    document.getElementById('swapStats').innerHTML=[
+      ['Status',s.paused?'<span class="stat-val red">Paused</span>':'<span class="stat-val green">Active</span>'],
+      ['AMTS Reserve',`<span class="stat-val green">${r.amts_balance?fmt(parseInt(r.amts_balance)/1e6,0):'—'} AMTS</span>`],
+      ['Rate',`<span class="stat-val blue">${s.current_rate_cents?'$'+(s.current_rate_cents/100).toFixed(2):'$7.50'}</span>`],
+      ['Total Swaps',`<span class="stat-val">${s.total_swaps??'0'}</span>`],
+      ['AMTS Dispensed',`<span class="stat-val">${s.total_amts_dispensed?fmt(parseInt(s.total_amts_dispensed)/1e6,4):'0'} AMTS</span>`],
+      ['Floor Price','<span class="stat-val">$7.50 (immutable)</span>'],
+    ].map(([k,v])=>`<div class="stat-row"><span class="stat-key">${k}</span>${v}</div>`).join('');
+    const channels=chanR.channels||[];
+    const ourChan=channels.find(c=>c.channel_id==='channel-2');
+    document.getElementById('flashIbcStats').innerHTML=[
+      ['Flash Pool',`<span class="stat-val green">${samtsR.total_samts?fmt(parseInt(samtsR.total_samts)/1e6,0):'21,000,000'} AMTS</span>`],
+      ['Flash Fee','<span class="stat-val green">0.05%</span>'],
+      ['vs Aave','<span class="stat-val green">50% cheaper</span>'],
+      ['IBC Channel','<span class="stat-val blue">channel-2 ↔ channel-110342</span>'],
+      ['Channel State',ourChan?.state==='STATE_OPEN'?'<span class="stat-val green">Open</span>':'<span class="stat-val red">Closed</span>'],
+      ['Open Channels',`<span class="stat-val">${channels.filter(c=>c.state==='STATE_OPEN').length}</span>`],
+    ].map(([k,v])=>`<div class="stat-row"><span class="stat-key">${k}</span>${v}</div>`).join('');
+    const proposals=govR.proposals||[];
+    document.getElementById('govMeta').textContent=proposals.length+' proposals';
+    document.getElementById('govRows').innerHTML=proposals.length?proposals.map(p=>{
+      const st=p.status||'';
+      const cls=st.includes('VOTING')?'voting':st.includes('PASSED')?'passed':'rejected';
+      const lbl=st.includes('VOTING')?'VOTING':st.includes('PASSED')?'PASSED':'REJECTED';
+      return`<div class="gov-row"><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="font-family:var(--mono);font-size:10px;color:var(--dim)">#${p.id}</span><span class="gov-badge ${cls}">${lbl}</span></div><div style="font-size:13px;font-weight:600">${p.title||'Proposal #'+p.id}</div></div>`;
+    }).join(''):'<div class="loading" style="color:var(--dimmer)">No proposals</div>';
+  }catch(e){console.error('loadProtocol:',e);}
+}
+
+// ── TX MODAL ─────────────────────────────────────────────────────────────────
+function openTxModal(hash,height,code,events){
+  document.getElementById('txModalTitle').textContent='TX: '+shortHash(hash,10,8);
+  document.getElementById('txModal').classList.add('open');
+  let from='—',to='—',amount='—',fee='—',rebate='—',action='—';
+  (events||[]).forEach(evt=>{
+    if(evt.type==='transfer'){const a={};(evt.attributes||[]).forEach(x=>{a[x.key]=x.value;});if(a.sender)from=a.sender;if(a.recipient)to=a.recipient;if(a.amount?.includes('uamts')){const n=parseInt(a.amount.replace('uamts',''));if(!isNaN(n))amount=fmt(n/1e6,4)+' AMTS ($'+fmt(n/1e6*AMTS_PRICE,2)+')';}}
+    if(evt.type==='tx')(evt.attributes||[]).forEach(a=>{if(a.key==='fee'&&a.value?.includes('uamts')){const n=parseInt(a.value.replace('uamts',''));if(!isNaN(n))fee=fmt(n/1e6,6)+' AMTS';}});
+    if(evt.type==='fee_rebate')(evt.attributes||[]).forEach(a=>{if(a.key==='rebate_amount'&&a.value?.includes('uamts')){const n=parseInt(a.value.replace('uamts',''));if(!isNaN(n))rebate=fmt(n/1e6,6)+' AMTS';}});
+    if(evt.type==='message')(evt.attributes||[]).forEach(a=>{if(a.key==='action')action=a.value;});
+  });
+  const ok=code===0;
+  document.getElementById('txModalBody').innerHTML=[
+    ['Hash',`<span style="font-size:10px">${hash}</span>`],
+    ['Status',ok?'<span class="green">✓ Success</span>':`<span class="red">✗ Failed (${code})</span>`],
+    ['Block',`<span class="green">#${parseInt(height).toLocaleString()}</span>`],
+    ['From',`<span class="blue" style="font-size:10px">${from}</span>`],
+    ['To',`<span class="blue" style="font-size:10px">${to}</span>`],
+    ['Amount',`<span class="green">${amount}</span>`],
+    ['Fee Paid',fee],
+    ['80% Rebate',`<span class="green">${rebate}</span>`],
+    ['Type',action],
+  ].map(([k,v])=>`<div class="tx-modal-row"><div class="tx-modal-key">${k}</div><div class="tx-modal-val">${v}</div></div>`).join('');
+}
+function closeTxModal(){document.getElementById('txModal').classList.remove('open');}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeTxModal();});
+
+// ── LIVE TRANSACTION GRAPH ───────────────────────────────────────────────────
+let _graphInterval = null;
+let _graphInitialized = false;
+let _graphSim = null;
+let _graphNodes = new Map(); // addr -> node
+let _graphLinks = [];
+let _graphSvgEl = null;
+let _graphLinkSel, _graphNodeSel, _graphLabelSel;
+let _graphLastHeight = 0;
+let _graphTxCount = 0;
+let _graphHrbCount = 0;
+let _graphGrmlabCount = 0;
+let _graphOtherCount = 0;
+
+const GRMLAB_PREFIXES = ['GRMLAB'];
+const HRB_COLOR = '#fbbf24';
+const GRMLAB_COLOR = '#60a5fa';
+const OTHER_COLOR = '#4ade80';
+const VAL_COLOR = '#a78bfa';
+const LINK_COLOR = 'rgba(255,255,255,0.15)';
+
+function getNodeColor(addr) {
+  if (addr === HRB_ADDR) return HRB_COLOR;
+  if (addr.startsWith('amitisvaloper') || COOP.some(v => v.earnings === addr || v.valoper === addr)) return VAL_COLOR;
+  return OTHER_COLOR; // will be overridden for GRMLAB once identified
+}
+
+function getNodeSize(addr) {
+  const n = _graphNodes.get(addr);
+  if (!n) return 6;
+  if (addr === HRB_ADDR) return 18;
+  const count = n.txCount || 1;
+  return Math.min(16, 5 + Math.sqrt(count) * 1.5);
+}
+
+function initGraph() {
+  if (_graphInitialized) return;
+  _graphInitialized = true;
+
+  const svg = d3.select('#graphSvg');
+  const rect = document.getElementById('graphSvg').getBoundingClientRect();
+  const W = rect.width || 800, H = 600;
+
+  svg.attr('viewBox', `0 0 ${W} ${H}`);
+
+  // Defs for arrow markers and glow
+  const defs = svg.append('defs');
+  defs.append('marker').attr('id','arrowhead').attr('viewBox','0 -5 10 10').attr('refX',12).attr('refY',0).attr('markerWidth',4).attr('markerHeight',4).attr('orient','auto')
+    .append('path').attr('d','M0,-5L10,0L0,5').attr('fill','rgba(255,255,255,0.4)');
+
+  const filter = defs.append('filter').attr('id','glow');
+  filter.append('feGaussianBlur').attr('stdDeviation','3').attr('result','coloredBlur');
+  const feMerge = filter.append('feMerge');
+  feMerge.append('feMergeNode').attr('in','coloredBlur');
+  feMerge.append('feMergeNode').attr('in','SourceGraphic');
+
+  // Groups
+  _graphSvgEl = svg;
+  const g = svg.append('g').attr('class','graph-g');
+  svg.call(d3.zoom().scaleExtent([0.3, 3]).on('zoom', e => g.attr('transform', e.transform)));
+
+  g.append('g').attr('class','links');
+  g.append('g').attr('class','nodes');
+  g.append('g').attr('class','labels');
+
+  _graphSim = d3.forceSimulation()
+    .force('link', d3.forceLink().id(d=>d.id).distance(50).strength(0.8))
+    .force('charge', d3.forceManyBody().strength(-60))
+    .force('center', d3.forceCenter(W/2, H/2).strength(0.05))
+    .force('collision', d3.forceCollide().radius(d => getNodeSize(d.id) + 2))
+    .alphaDecay(0.01)
+    .on('tick', graphTick);
+}
+
+function graphTick() {
+  const g = _graphSvgEl.select('.graph-g');
+  g.select('.links').selectAll('line')
+    .attr('x1', d => d.source.x || 0).attr('y1', d => d.source.y || 0)
+    .attr('x2', d => d.target.x || 0).attr('y2', d => d.target.y || 0);
+  g.select('.nodes').selectAll('circle')
+    .attr('cx', d => d.x).attr('cy', d => d.y);
+  g.select('.labels').selectAll('text')
+    .attr('x', d => d.x).attr('y', d => d.y + getNodeSize(d.id) + 10);
+}
+
+function addGraphTransaction(from, to, amtAmts) {
+  if (!from || !to || from === to) return;
+  _graphTxCount++;
+
+  // Add/update nodes
+  [from, to].forEach(addr => {
+    if (!_graphNodes.has(addr)) {
+      _graphNodes.set(addr, { id: addr, txCount: 0, firstSeen: Date.now() });
+    }
+    _graphNodes.get(addr).txCount++;
+  });
+  _graphNodes.get(from).txCount++;
+
+  // Add link (keep last 200)
+  _graphLinks.push({ source: from, target: to, amount: amtAmts, ts: Date.now() });
+  if (_graphLinks.length > 200) _graphLinks.shift();
+
+  // Expire old links (>60s)
+  const now = Date.now();
+  _graphLinks = _graphLinks.filter(l => now - l.ts < 60000);
+
+  // Limit nodes to 80
+  if (_graphNodes.size > 80) {
+    const sorted = [..._graphNodes.entries()].sort((a,b) => a[1].firstSeen - b[1].firstSeen);
+    _graphNodes.delete(sorted[0][0]);
+  }
+
+  updateGraphRender();
+
+  // Update counters
+  if (from === HRB_ADDR || to === HRB_ADDR) _graphHrbCount++;
+  else if (from.startsWith('amitis1') && _graphNodes.get(from)?.txCount > 5) _graphGrmlabCount++;
+  else _graphOtherCount++;
+
+  document.getElementById('graphNodeCount').textContent = _graphNodes.size;
+  document.getElementById('graphEdgeCount').textContent = _graphLinks.length;
+  document.getElementById('graphTxCount').textContent = _graphTxCount;
+  document.getElementById('graphHrbTxs').textContent = _graphHrbCount;
+  document.getElementById('graphGrmlabTxs').textContent = _graphGrmlabCount;
+  document.getElementById('graphOtherTxs').textContent = _graphOtherCount;
+  document.getElementById('graphLastTx').textContent = new Date().toLocaleTimeString();
+}
+
+function updateGraphRender() {
+  if (!_graphSvgEl || !_graphSim) return;
+  const g = _graphSvgEl.select('.graph-g');
+  const nodesData = [..._graphNodes.values()];
+  const linksData = _graphLinks.map(l => ({...l}));
+
+  // Links
+  const linkSel = g.select('.links').selectAll('line').data(linksData, d => d.source+'->'+d.target+d.ts);
+  linkSel.enter().append('line')
+    .attr('stroke', 'rgba(255,255,255,0.25)')
+    .attr('stroke-width', 1.5)
+    .attr('marker-end','url(#arrowhead)')
+    .attr('opacity', 0)
+    .transition().duration(200).attr('opacity', 1);
+  linkSel.exit().transition().duration(800).attr('opacity',0).remove();
+
+  // Nodes
+  const nodeSel = g.select('.nodes').selectAll('circle').data(nodesData, d=>d.id);
+  const nodeEnter = nodeSel.enter().append('circle')
+    .attr('r', 0)
+    .attr('fill', d => getNodeColor(d.id))
+    .attr('filter', d => d.id === HRB_ADDR ? 'url(#glow)' : null)
+    .attr('stroke', 'rgba(255,255,255,0.2)')
+    .attr('stroke-width', 1)
+    .attr('cursor','pointer')
+    .on('mouseover', (event, d) => {
+      const tip = document.getElementById('graphTooltip');
+      tip.innerHTML = `<div style="color:var(--white);margin-bottom:4px">${d.id.slice(0,16)}…${d.id.slice(-6)}</div><div style="color:var(--dim)">Txs: ${d.txCount}</div>`;
+      tip.style.opacity = '1';
+      tip.style.left = (event.offsetX + 12)+'px';
+      tip.style.top = (event.offsetY - 10)+'px';
+    })
+    .on('mouseout', () => { document.getElementById('graphTooltip').style.opacity = '0'; })
+    .call(d3.drag()
+      .on('start', (event, d) => { if(!event.active)_graphSim.alphaTarget(0.3).restart(); d.fx=d.x;d.fy=d.y; })
+      .on('drag', (event, d) => { d.fx=event.x;d.fy=event.y; })
+      .on('end', (event, d) => { if(!event.active)_graphSim.alphaTarget(0); d.fx=null;d.fy=null; }));
+  nodeEnter.transition().duration(400).attr('r', d => getNodeSize(d.id));
+  nodeSel.transition().duration(200).attr('r', d => getNodeSize(d.id));
+  nodeSel.exit().transition().duration(300).attr('r',0).remove();
+
+  // Labels (only for HRB and high-activity nodes)
+  const labelData = nodesData.filter(d => d.id === HRB_ADDR || d.txCount > 10);
+  const labelSel = g.select('.labels').selectAll('text').data(labelData, d=>d.id);
+  labelSel.enter().append('text')
+    .attr('font-family','var(--mono)')
+    .attr('font-size','9px')
+    .attr('fill','rgba(255,255,255,0.5)')
+    .attr('text-anchor','middle')
+    .text(d => d.id === HRB_ADDR ? 'HRB-DEBIT' : d.id.slice(0,8)+'…');
+  labelSel.exit().remove();
+
+  _graphSim.nodes(nodesData);
+  _graphSim.force('link').links(linksData);
+  _graphSim.alpha(0.3).restart();
+}
+
+async function graphFetchTxs() {
+  try {
+    const minH = Math.max(1, _graphLastHeight > 0 ? _graphLastHeight : _lastBlockHeight - 20);
+    const res = await fetch(`${API}/rpc?endpoint=tx_search&query=%22tx.height%3E${minH}%22&per_page=50&order_by=%22asc%22`).then(r=>r.json()).catch(()=>({}));
+    const txs = res.result?.txs || [];
+    txs.forEach(tx => {
+      const h = parseInt(tx.height);
+      if (h > _graphLastHeight) _graphLastHeight = h;
+      const evts = tx.tx_result?.events || [];
+      const tf = evts.find(e => e.type === 'transfer');
+      if (!tf) return;
+      const from = tf.attributes?.find(a=>a.key==='sender')?.value;
+      const to = tf.attributes?.find(a=>a.key==='recipient')?.value;
+      const amtStr = tf.attributes?.find(a=>a.key==='amount')?.value || '';
+      const amt = amtStr.includes('uamts') ? parseInt(amtStr.replace('uamts',''))/1e6 : 0;
+      addGraphTransaction(from, to, amt);
+    });
+  } catch(e) { console.error('graphFetch:', e); }
+}
+
+function startGraphFeed() {
+  if (_graphInterval) return;
+  graphFetchTxs();
+  _graphInterval = setInterval(graphFetchTxs, 5000);
+}
+
+function stopGraphFeed() {
+  if (_graphInterval) { clearInterval(_graphInterval); _graphInterval = null; }
+}
+
+function resetGraph() {
+  _graphNodes.clear();
+  _graphLinks = [];
+  _graphTxCount = 0;
+  _graphHrbCount = 0;
+  _graphGrmlabCount = 0;
+  _graphOtherCount = 0;
+  _graphLastHeight = 0;
+  if (_graphSvgEl) {
+    _graphSvgEl.select('.links').selectAll('*').remove();
+    _graphSvgEl.select('.nodes').selectAll('*').remove();
+    _graphSvgEl.select('.labels').selectAll('*').remove();
+  }
+  document.getElementById('graphNodeCount').textContent = '0';
+  document.getElementById('graphEdgeCount').textContent = '0';
+  document.getElementById('graphTxCount').textContent = '0';
+}
+
+// ── GATE ─────────────────────────────────────────────────────────────────────
+const PASS=atob('YW1pdGlzMjAyNmNsaWZm');
+function checkPass(){
+  const val=document.getElementById('gateInput').value;
+  if(val===PASS){
+    document.getElementById('gate').style.display='none';
+    sessionStorage.setItem('cliff_auth','1');
+    initDashboard();
+  }else{
+    const inp=document.getElementById('gateInput');
+    inp.classList.add('error');
+    document.getElementById('gateErr').textContent='Incorrect access code';
+    setTimeout(()=>{inp.classList.remove('error');inp.value='';inp.focus();},600);
+  }
+}
+
+function initDashboard(){
+  loadCoop();
+  setInterval(loadCoop,30000);
+  setInterval(()=>{
+    if(window._petalsLoaded)loadPetals();
+    if(window._networkLoaded)loadNetwork();
+    if(window._protocolLoaded)loadProtocol();
+  },30000);
+}
+
+if(sessionStorage.getItem('cliff_auth')==='1'){
+  document.getElementById('gate').style.display='none';
+  initDashboard();
+}
+document.getElementById('gateInput').focus();
+</script>
+</body>
+</html>

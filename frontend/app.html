@@ -1,0 +1,2129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amitis — Sovereign Wallet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --void:     #03030a;
+  --deep:     #070712;
+  --surface:  #0c0c1e;
+  --raised:   #111128;
+  --card:     rgba(255,255,255,0.025);
+  --border:   rgba(255,255,255,0.06);
+  --bhi:      rgba(255,255,255,0.12);
+  --gold:     #c8a44a;
+  --gold-lt:  #e6c76a;
+  --gold-dk:  #9a7a2e;
+  --gdim:     rgba(200,164,74,0.10);
+  --gbdr:     rgba(200,164,74,0.24);
+  --green:    #3ecf7a;
+  --grdim:    rgba(62,207,122,0.10);
+  --grbdr:    rgba(62,207,122,0.24);
+  --red:      #e05252;
+  --rdim:     rgba(224,82,82,0.10);
+  --blue:     #5b8cf5;
+  --bldim:    rgba(91,140,245,0.10);
+  --cream:    #f0ebe0;
+  --muted:    rgba(240,235,224,0.42);
+  --dimmer:   rgba(240,235,224,0.18);
+  --faint:    rgba(240,235,224,0.05);
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--void);
+  color: var(--cream);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── NOISE ── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ── SHELL ── */
+.shell {
+  display: grid;
+  grid-template-columns: 72px 220px 1fr;
+  grid-template-rows: 100vh;
+  min-height: 100vh;
+}
+
+/* ── ICON RAIL ── */
+.rail {
+  background: var(--deep);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 0;
+  gap: 4px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.rail-logo {
+  width: 38px;
+  height: 38px;
+  margin-bottom: 20px;
+}
+
+.rail-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--dimmer);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  transition: all 0.15s;
+  position: relative;
+}
+.rail-btn:hover { background: var(--faint); color: var(--cream); }
+.rail-btn.active {
+  background: var(--gdim);
+  border-color: var(--gbdr);
+  color: var(--gold);
+}
+.rail-btn .tooltip {
+  position: absolute;
+  left: 52px;
+  background: var(--raised);
+  border: 1px solid var(--border);
+  color: var(--cream);
+  font-size: 11px;
+  font-family: 'DM Mono', monospace;
+  padding: 4px 10px;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+  z-index: 100;
+}
+.rail-btn:hover .tooltip { opacity: 1; }
+
+.rail-spacer { flex: 1; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  background: var(--deep);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow-y: auto;
+  position: sticky;
+  top: 0;
+}
+
+.sidebar-brand {
+  padding: 22px 20px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.brand-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--cream);
+  letter-spacing: 0.05em;
+}
+.brand-tag {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.sidebar-wallet {
+  margin: 16px 12px;
+  background: var(--gdim);
+  border: 1px solid var(--gbdr);
+  border-radius: 10px;
+  padding: 14px 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.sidebar-wallet:hover { background: rgba(200,164,74,0.15); }
+.wallet-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 8px;
+}
+.wallet-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+.wallet-dot.disconnected { background: var(--dimmer); box-shadow: none; animation: none; }
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.wallet-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--gold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.wallet-addr {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--cream);
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wallet-balance-main {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--gold);
+  line-height: 1;
+}
+.wallet-balance-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.sidebar-section {
+  padding: 18px 16px 6px;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.25em;
+  color: var(--dimmer);
+  text-transform: uppercase;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  margin: 1px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--muted);
+  border: 1px solid transparent;
+  transition: all 0.15s;
+}
+.nav-item:hover { background: var(--faint); color: var(--cream); }
+.nav-item.active {
+  background: var(--gdim);
+  border-color: var(--gbdr);
+  color: var(--gold);
+  font-weight: 500;
+}
+.nav-icon { font-size: 14px; width: 18px; text-align: center; flex-shrink: 0; }
+.nav-badge {
+  margin-left: auto;
+  background: var(--gdim);
+  border: 1px solid var(--gbdr);
+  color: var(--gold);
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 16px 12px;
+  border-top: 1px solid var(--border);
+}
+.network-pill {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  background: var(--grdim);
+  border: 1px solid var(--grbdr);
+  border-radius: 6px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--green);
+}
+.network-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* ── MAIN ── */
+.main {
+  background: var(--void);
+  overflow-y: auto;
+  height: 100vh;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(3,3,10,0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.topbar-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 300;
+  letter-spacing: 0.03em;
+  color: var(--cream);
+}
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.topbar-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 6px 14px;
+  border-radius: 50px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.topbar-btn:hover { border-color: var(--bhi); color: var(--cream); }
+.topbar-btn.primary {
+  background: var(--gdim);
+  border-color: var(--gbdr);
+  color: var(--gold);
+}
+.topbar-btn.primary:hover { background: rgba(200,164,74,0.18); }
+
+.content {
+  padding: 32px;
+  max-width: 1100px;
+}
+
+/* ── PAGES ── */
+.page { display: none; }
+.page.active { display: block; }
+
+/* ── STATS ROW ── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  transition: border-color 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold-dk), transparent);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.stat-card:hover { border-color: var(--gbdr); }
+.stat-card:hover::before { opacity: 1; }
+.stat-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: var(--dimmer);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.stat-value {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--cream);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.stat-value.gold { color: var(--gold); }
+.stat-value.green { color: var(--green); }
+.stat-change {
+  font-size: 11px;
+  color: var(--green);
+  font-family: 'DM Mono', monospace;
+}
+.stat-change.down { color: var(--red); }
+
+/* ── SECTION HEADER ── */
+.section-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.section-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: var(--cream);
+}
+.section-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: var(--dimmer);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.section-action {
+  font-size: 12px;
+  color: var(--gold);
+  cursor: pointer;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 0.05em;
+}
+.section-action:hover { color: var(--gold-lt); }
+
+/* ── GRID ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  transition: border-color 0.2s;
+}
+.card:hover { border-color: var(--bhi); }
+.card-lg { padding: 28px; }
+
+/* ── RWA ASSET CARD ── */
+.rwa-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 10px;
+  transition: all 0.2s;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: 48px 1fr auto;
+  gap: 16px;
+  align-items: center;
+}
+.rwa-card:hover {
+  border-color: var(--gbdr);
+  background: var(--gdim);
+}
+.rwa-icon {
+  width: 48px; height: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  background: var(--raised);
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.rwa-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--cream);
+  margin-bottom: 2px;
+}
+.rwa-meta {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+}
+.rwa-value {
+  text-align: right;
+}
+.rwa-amount {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--gold);
+}
+.rwa-status {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--green);
+  margin-top: 2px;
+}
+.rwa-status.pending { color: var(--gold); }
+.rwa-status.expired { color: var(--red); }
+
+/* ── ORACLE STATUS ── */
+.oracle-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 16px;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+.oracle-row:last-child { border-bottom: none; }
+.oracle-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--cream);
+  margin-bottom: 2px;
+}
+.oracle-sub {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+}
+.oracle-val {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--cream);
+  text-align: right;
+}
+.oracle-time {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--dimmer);
+  text-align: right;
+}
+.oracle-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+}
+.oracle-badge.confirmed { background: var(--grdim); border: 1px solid var(--grbdr); color: var(--green); }
+.oracle-badge.pending { background: var(--gdim); border: 1px solid var(--gbdr); color: var(--gold); }
+.oracle-badge.dual { background: rgba(91,140,245,0.10); border: 1px solid rgba(91,140,245,0.24); color: var(--blue); }
+
+/* ── TOKEN ROW ── */
+.token-row {
+  display: grid;
+  grid-template-columns: 40px 1fr auto auto;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.token-row:last-child { border-bottom: none; }
+.token-row:hover { opacity: 0.85; }
+.token-icon {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'DM Mono', monospace;
+  flex-shrink: 0;
+}
+.token-icon.amts { background: var(--gdim); border: 1px solid var(--gbdr); color: var(--gold); }
+.token-icon.ncd  { background: var(--bldim); border: 1px solid rgba(91,140,245,0.24); color: var(--blue); }
+.token-icon.osmo { background: rgba(116,66,245,0.12); border: 1px solid rgba(116,66,245,0.24); color: #9b6bfa; }
+.token-icon.atom { background: rgba(112,186,255,0.10); border: 1px solid rgba(112,186,255,0.24); color: #70baff; }
+.token-name { font-size: 13px; font-weight: 500; color: var(--cream); margin-bottom: 1px; }
+.token-sub  { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); }
+.token-amount { font-family: 'Cormorant Garamond', serif; font-size: 17px; font-weight: 600; color: var(--cream); text-align: right; }
+.token-usd    { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); text-align: right; }
+
+/* ── TX ROW ── */
+.tx-row {
+  display: grid;
+  grid-template-columns: 32px 1fr auto auto;
+  gap: 14px;
+  align-items: center;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--border);
+}
+.tx-row:last-child { border-bottom: none; }
+.tx-icon {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.tx-icon.send    { background: var(--rdim); color: var(--red); }
+.tx-icon.recv    { background: var(--grdim); color: var(--green); }
+.tx-icon.swap    { background: var(--gdim); color: var(--gold); }
+.tx-icon.stake   { background: var(--bldim); color: var(--blue); }
+.tx-desc  { font-size: 12px; color: var(--cream); margin-bottom: 1px; }
+.tx-hash  { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--dimmer); }
+.tx-time  { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--dimmer); text-align: right; }
+.tx-amount { font-family: 'DM Mono', monospace; font-size: 12px; text-align: right; }
+.tx-amount.pos { color: var(--green); }
+.tx-amount.neg { color: var(--red); }
+
+/* ── SWAP UI ── */
+.swap-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 10px;
+}
+.swap-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: var(--dimmer);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.swap-input-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.swap-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--cream);
+  width: 100%;
+}
+.swap-input::placeholder { color: var(--dimmer); }
+.swap-token-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--raised);
+  border: 1px solid var(--border);
+  border-radius: 50px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cream);
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.swap-token-btn:hover { border-color: var(--bhi); }
+.swap-usd {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--dimmer);
+  margin-top: 8px;
+}
+.swap-arrow {
+  text-align: center;
+  color: var(--gold);
+  font-size: 18px;
+  margin: 4px 0;
+  cursor: pointer;
+}
+.swap-info {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin: 12px 0;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.swap-info-row { display: flex; justify-content: space-between; color: var(--muted); }
+.swap-info-row span:last-child { color: var(--cream); }
+
+/* ── GOVERNANCE ── */
+.prop-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 12px;
+  transition: border-color 0.2s;
+}
+.prop-card:hover { border-color: var(--bhi); }
+.prop-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  gap: 16px;
+}
+.prop-id {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--gold);
+  letter-spacing: 0.1em;
+}
+.prop-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--cream);
+  margin: 4px 0 8px;
+  line-height: 1.3;
+}
+.prop-desc { font-size: 12px; color: var(--muted); line-height: 1.6; }
+.prop-status {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.prop-status.voting { background: var(--gdim); border: 1px solid var(--gbdr); color: var(--gold); }
+.prop-status.passed { background: var(--grdim); border: 1px solid var(--grbdr); color: var(--green); }
+.prop-status.pending { background: var(--card); border: 1px solid var(--border); color: var(--muted); }
+.vote-bar {
+  height: 4px;
+  background: var(--raised);
+  border-radius: 2px;
+  margin: 14px 0 8px;
+  overflow: hidden;
+  display: flex;
+}
+.vote-yes { background: var(--green); border-radius: 2px 0 0 2px; }
+.vote-no  { background: var(--red); }
+.vote-abs { background: var(--dimmer); border-radius: 0 2px 2px 0; }
+.vote-labels {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+}
+.vote-btns { display: flex; gap: 8px; margin-top: 14px; }
+
+/* ── BUTTONS ── */
+.btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+.btn-gold {
+  background: var(--gold);
+  color: #000;
+  border-color: var(--gold);
+}
+.btn-gold:hover { background: var(--gold-lt); }
+.btn-outline {
+  background: transparent;
+  color: var(--muted);
+  border-color: var(--border);
+}
+.btn-outline:hover { border-color: var(--bhi); color: var(--cream); }
+.btn-green {
+  background: var(--grdim);
+  color: var(--green);
+  border-color: var(--grbdr);
+}
+.btn-red {
+  background: var(--rdim);
+  color: var(--red);
+  border-color: rgba(224,82,82,0.24);
+}
+.btn-sm { padding: 6px 14px; font-size: 12px; }
+.btn-full { width: 100%; text-align: center; padding: 14px; font-size: 14px; }
+
+/* ── VALIDATOR GRID ── */
+.validator-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.validator-petal {
+  aspect-ratio: 1;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid var(--border);
+  background: var(--card);
+  gap: 4px;
+  padding: 8px 4px;
+}
+.validator-petal:hover { border-color: var(--gbdr); background: var(--gdim); }
+.validator-petal.active { border-color: var(--grbdr); background: var(--grdim); }
+.validator-petal.sovereign { border-color: var(--gbdr); background: var(--gdim); }
+.petal-num { font-size: 16px; font-weight: 500; color: var(--cream); }
+.petal-dot { width: 6px; height: 6px; border-radius: 50%; }
+.petal-dot.online { background: var(--green); }
+.petal-dot.offline { background: var(--red); }
+.petal-label { font-size: 9px; color: var(--dimmer); letter-spacing: 0.05em; }
+
+/* ── CHART PLACEHOLDER ── */
+.chart-area {
+  height: 120px;
+  background: var(--surface);
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  margin: 16px 0;
+}
+.chart-svg { width: 100%; height: 100%; }
+
+/* ── POOL CARD ── */
+.pool-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.pool-card:hover { border-color: var(--gbdr); background: var(--gdim); }
+.pool-pair {
+  display: flex;
+  align-items: center;
+  gap: -4px;
+  margin-bottom: 12px;
+}
+.pool-token {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  border: 2px solid var(--void);
+}
+.pool-token:not(:first-child) { margin-left: -8px; }
+.pool-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--cream);
+  margin-bottom: 2px;
+}
+.pool-meta {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+}
+.pool-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.pool-stat-label { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--dimmer); text-transform: uppercase; letter-spacing: 0.1em; }
+.pool-stat-val   { font-family: 'Cormorant Garamond', serif; font-size: 17px; font-weight: 600; color: var(--cream); }
+
+/* ── CONNECT MODAL ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(3,3,10,0.85);
+  backdrop-filter: blur(10px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--deep);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+  width: 420px;
+  max-width: 90vw;
+  transform: translateY(16px);
+  transition: transform 0.2s;
+  position: relative;
+}
+.modal-overlay.open .modal { transform: translateY(0); }
+.modal-close {
+  position: absolute;
+  top: 16px; right: 16px;
+  background: transparent;
+  border: none;
+  color: var(--dimmer);
+  font-size: 18px;
+  cursor: pointer;
+  line-height: 1;
+  transition: color 0.15s;
+}
+.modal-close:hover { color: var(--cream); }
+.modal-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--cream);
+  margin-bottom: 6px;
+}
+.modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 24px; line-height: 1.6; }
+.modal-chain-info {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 20px;
+}
+.modal-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+}
+.modal-row:not(:last-child) { border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 3px; }
+.modal-row-label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--dimmer); }
+.modal-row-val   { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--cream); }
+.modal-btns { display: flex; gap: 10px; }
+.modal-status {
+  min-height: 20px;
+  margin-top: 14px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  text-align: center;
+}
+
+/* ── LOADING ── */
+.loading {
+  display: inline-block;
+  width: 12px; height: 12px;
+  border: 1.5px solid var(--dimmer);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.shimmer {
+  background: linear-gradient(90deg, var(--card) 25%, var(--raised) 50%, var(--card) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .shell { grid-template-columns: 0 220px 1fr; }
+  .rail { display: none; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .grid-3 { grid-template-columns: 1fr 1fr; }
+  .validator-grid { grid-template-columns: repeat(4, 1fr); }
+}
+@media (max-width: 600px) {
+  .shell { grid-template-columns: 0 0 1fr; }
+  .sidebar { display: none; }
+  .stats-row { grid-template-columns: 1fr; }
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+<!-- ── ICON RAIL ── -->
+<nav class="rail">
+  <svg class="rail-logo" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="160" cy="160" r="155" fill="#070712"/>
+    <circle cx="160" cy="160" r="155" fill="none" stroke="rgba(200,164,74,0.6)" stroke-width="6"/>
+    <text x="160" y="252" text-anchor="middle" font-family="Arial Black" font-size="260" font-weight="900" fill="white">A</text>
+    <path d="M248,72 C268,52 288,68 268,88 C258,98 238,92 248,72Z" fill="#c8a44a" opacity="0.8"/>
+  </svg>
+  <button class="rail-btn active" onclick="setPage('portfolio')" id="rail-portfolio">
+    ◈<span class="tooltip">Portfolio</span>
+  </button>
+  <button class="rail-btn" onclick="setPage('rwa')" id="rail-rwa">
+    ⬡<span class="tooltip">RWA Assets</span>
+  </button>
+  <button class="rail-btn" onclick="setPage('swap')" id="rail-swap">
+    ⇌<span class="tooltip">Swap</span>
+  </button>
+  <button class="rail-btn" onclick="setPage('pools')" id="rail-pools">
+    ◎<span class="tooltip">Liquidity Pools</span>
+  </button>
+  <button class="rail-btn" onclick="setPage('oracle')" id="rail-oracle">
+    ✦<span class="tooltip">Oracle Status</span>
+  </button>
+  <button class="rail-btn" onclick="setPage('governance')" id="rail-governance">
+    ⊞<span class="tooltip">Governance</span>
+  </button>
+  <button class="rail-btn" onclick="setPage('validators')" id="rail-validators">
+    ⬟<span class="tooltip">Validators</span>
+  </button>
+  <div class="rail-spacer"></div>
+  <button class="rail-btn" onclick="setPage('settings')" id="rail-settings">
+    ⚙<span class="tooltip">Settings</span>
+  </button>
+</nav>
+
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-name">Amitis</div>
+    <div class="brand-tag">Sovereign Wallet</div>
+  </div>
+
+  <div class="sidebar-wallet" onclick="handleConnect()" id="walletPanel">
+    <div class="wallet-status">
+      <div class="wallet-dot disconnected" id="walletDot"></div>
+      <div class="wallet-label" id="walletLabel">Not Connected</div>
+    </div>
+    <div class="wallet-addr" id="walletAddr">Connect your Keplr wallet</div>
+    <div class="wallet-balance-main" id="walletBal">—</div>
+    <div class="wallet-balance-sub" id="walletBalUsd">AMTS Balance</div>
+  </div>
+
+  <span class="sidebar-section">Portfolio</span>
+  <div class="nav-item active" onclick="setPage('portfolio', this)">
+    <span class="nav-icon">◈</span> Overview
+  </div>
+  <div class="nav-item" onclick="setPage('rwa', this)">
+    <span class="nav-icon">⬡</span> RWA Assets
+    <span class="nav-badge" id="rwaBadge">1</span>
+  </div>
+
+  <span class="sidebar-section">Trading</span>
+  <div class="nav-item" onclick="setPage('swap', this)">
+    <span class="nav-icon">⇌</span> Swap
+  </div>
+  <div class="nav-item" onclick="setPage('pools', this)">
+    <span class="nav-icon">◎</span> Liquidity Pools
+  </div>
+
+  <span class="sidebar-section">Network</span>
+  <div class="nav-item" onclick="setPage('oracle', this)">
+    <span class="nav-icon">✦</span> Oracle Status
+  </div>
+  <div class="nav-item" onclick="setPage('governance', this)">
+    <span class="nav-icon">⊞</span> Governance
+    <span class="nav-badge">2</span>
+  </div>
+  <div class="nav-item" onclick="setPage('validators', this)">
+    <span class="nav-icon">⬟</span> Validators
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="network-pill">
+      <div class="network-dot"></div>
+      amitis-network · live
+    </div>
+  </div>
+</aside>
+
+<!-- ── MAIN ── -->
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="pageTitle">Portfolio Overview</div>
+    <div class="topbar-right">
+      <span id="blockHeight" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--dimmer)">Block —</span>
+      <button class="topbar-btn" onclick="refreshAll()">↺ Refresh</button>
+      <button class="topbar-btn primary" id="topConnectBtn" onclick="handleConnect()">Connect Wallet</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ── PAGE: PORTFOLIO ── -->
+    <div class="page active" id="page-portfolio">
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Total Portfolio</div>
+          <div class="stat-value gold" id="stat-total">$—</div>
+          <div class="stat-change" id="stat-change">Connect wallet to view</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">AMTS Balance</div>
+          <div class="stat-value" id="stat-amts">—</div>
+          <div class="stat-change">@ $7.50 / AMTS</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">RWA Holdings</div>
+          <div class="stat-value gold" id="stat-rwa">—</div>
+          <div class="stat-change">sovereign NCD position</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Fee Rebates Earned</div>
+          <div class="stat-value green" id="stat-rebates">—</div>
+          <div class="stat-change">80% auto-returned</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card card-lg">
+          <div class="section-hdr">
+            <div>
+              <div class="section-label">Token Balances</div>
+              <div class="section-title">Holdings</div>
+            </div>
+            <span class="section-action" onclick="setPage('swap')">Swap →</span>
+          </div>
+          <div id="tokenList">
+            <div class="token-row">
+              <div class="token-icon amts">A</div>
+              <div><div class="token-name">Amitis</div><div class="token-sub">AMTS · native</div></div>
+              <div><div class="token-amount" id="tok-amts">—</div><div class="token-usd" id="tok-amts-usd">—</div></div>
+              <div></div>
+            </div>
+            <div class="token-row">
+              <div class="token-icon ncd">N</div>
+              <div><div class="token-name">Sovereign NCD</div><div class="token-sub">NCD-001 · RWA</div></div>
+              <div><div class="token-amount" id="tok-ncd">—</div><div class="token-usd" id="tok-ncd-usd">—</div></div>
+              <div></div>
+            </div>
+            <div class="token-row">
+              <div class="token-icon osmo">O</div>
+              <div><div class="token-name">Osmosis</div><div class="token-sub">OSMO · IBC</div></div>
+              <div><div class="token-amount" id="tok-osmo">—</div><div class="token-usd">via IBC</div></div>
+              <div></div>
+            </div>
+            <div class="token-row">
+              <div class="token-icon atom">⚛</div>
+              <div><div class="token-name">Cosmos Hub</div><div class="token-sub">ATOM · IBC</div></div>
+              <div><div class="token-amount" id="tok-atom">—</div><div class="token-usd">via IBC</div></div>
+              <div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card card-lg">
+          <div class="section-hdr">
+            <div>
+              <div class="section-label">Activity</div>
+              <div class="section-title">Recent Transactions</div>
+            </div>
+          </div>
+          <div id="txList">
+            <div style="text-align:center;padding:32px 0;color:var(--dimmer);font-size:13px;">
+              Connect wallet to view transactions
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-hdr">
+          <div>
+            <div class="section-label">Network</div>
+            <div class="section-title">Protocol Stats</div>
+          </div>
+        </div>
+        <div class="stats-row" style="margin-bottom:0">
+          <div class="stat-card">
+            <div class="stat-label">Active Validators</div>
+            <div class="stat-value" id="net-validators">—</div>
+            <div class="stat-change">of 21 petals</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Latest Block</div>
+            <div class="stat-value" id="net-block">—</div>
+            <div class="stat-change">~500ms finality</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total Supply</div>
+            <div class="stat-value">1B</div>
+            <div class="stat-change">AMTS · fixed</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Fee Rebate</div>
+            <div class="stat-value green">80%</div>
+            <div class="stat-change">hardcoded · immutable</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAGE: RWA ── -->
+    <div class="page" id="page-rwa">
+      <div class="section-hdr" style="margin-bottom:20px">
+        <div>
+          <div class="section-label">Real World Assets</div>
+          <div class="section-title" style="font-size:24px">Tokenized Assets</div>
+        </div>
+        <button class="btn btn-gold btn-sm">+ Tokenize Asset</button>
+      </div>
+
+      <div class="rwa-card" onclick="showRWADetail()">
+        <div class="rwa-icon">🏦</div>
+        <div>
+          <div class="rwa-name">Sovereign Reserve NCD</div>
+          <div class="rwa-meta">NCD-001 · Tier-1 Bank · 5yr · 5% APY · Dual Oracle Verified</div>
+        </div>
+        <div class="rwa-value">
+          <div class="rwa-amount">$100,000,000</div>
+          <div class="rwa-status">● Dual Attested</div>
+        </div>
+      </div>
+
+      <div class="rwa-card" style="opacity:0.5;cursor:default">
+        <div class="rwa-icon">📄</div>
+        <div>
+          <div class="rwa-name">Tokenize New Asset</div>
+          <div class="rwa-meta">Submit governance proposal to tokenize a real-world asset on Amitis</div>
+        </div>
+        <div class="rwa-value">
+          <button class="btn btn-outline btn-sm" onclick="setPage('governance')">Submit Proposal →</button>
+        </div>
+      </div>
+
+      <!-- RWA Detail Panel -->
+      <div class="card card-lg" id="rwaDetail" style="display:none;margin-top:24px">
+        <div class="section-hdr">
+          <div>
+            <div class="section-label">NCD-001 · Active</div>
+            <div class="section-title" style="font-size:22px">Sovereign Reserve NCD</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <span class="oracle-badge dual">⬡ Dual Attested</span>
+          </div>
+        </div>
+        <div class="grid-2" style="margin:20px 0 0">
+          <div>
+            <div class="section-label" style="margin-bottom:12px">Asset Details</div>
+            <div class="oracle-row">
+              <div><div class="oracle-name">Face Value</div></div>
+              <div></div><div></div>
+              <div class="oracle-val">$100,000,000</div>
+            </div>
+            <div class="oracle-row">
+              <div><div class="oracle-name">Issuing Bank</div></div>
+              <div></div><div></div>
+              <div class="oracle-val">Tier-1 EU Bank</div>
+            </div>
+            <div class="oracle-row">
+              <div><div class="oracle-name">Interest Rate</div></div>
+              <div></div><div></div>
+              <div class="oracle-val">5.00% APY</div>
+            </div>
+            <div class="oracle-row">
+              <div><div class="oracle-name">Maturity</div></div>
+              <div></div><div></div>
+              <div class="oracle-val">2031-05-30</div>
+            </div>
+            <div class="oracle-row">
+              <div><div class="oracle-name">Yield Destination</div></div>
+              <div></div><div></div>
+              <div class="oracle-val" style="color:var(--gold)">Community Pool</div>
+            </div>
+            <div class="oracle-row">
+              <div><div class="oracle-name">Token Supply</div></div>
+              <div></div><div></div>
+              <div class="oracle-val">100,000,000</div>
+            </div>
+          </div>
+          <div>
+            <div class="section-label" style="margin-bottom:12px">Oracle Attestations</div>
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border)">
+                <div>
+                  <div style="font-size:13px;font-weight:500;color:var(--cream)">Chainlink PoR</div>
+                  <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:2px">External attestation</div>
+                </div>
+                <span class="oracle-badge confirmed">✓ Confirmed</span>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border)">
+                <div>
+                  <div style="font-size:13px;font-weight:500;color:var(--cream)">Amitis Validators</div>
+                  <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:2px">18 / 21 validators confirmed</div>
+                </div>
+                <span class="oracle-badge confirmed">✓ Confirmed</span>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <div>
+                  <div style="font-size:13px;font-weight:500;color:var(--blue)">Dual Attestation</div>
+                  <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:2px">Both sources agree</div>
+                </div>
+                <span class="oracle-badge dual">⬡ Verified</span>
+              </div>
+            </div>
+            <div style="margin-top:12px;font-family:'DM Mono',monospace;font-size:10px;color:var(--dimmer)">
+              Last confirmed: 2026-05-30 14:22 UTC<br>
+              Next scheduled: 2026-06-06 14:00 UTC<br>
+              Discrepancies: 0 (all-time)
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:20px;padding-top:20px;border-top:1px solid var(--border)">
+          <button class="btn btn-gold btn-sm">Add Liquidity</button>
+          <button class="btn btn-outline btn-sm" onclick="setPage('pools')">View Pool →</button>
+          <button class="btn btn-outline btn-sm" style="margin-left:auto">View on Explorer ↗</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAGE: SWAP ── -->
+    <div class="page" id="page-swap">
+      <div class="grid-2">
+        <div>
+          <div class="section-label" style="margin-bottom:16px">Native DEX · Flash Loans Available</div>
+          <div class="swap-box">
+            <div class="swap-label">You Pay</div>
+            <div class="swap-input-row">
+              <input class="swap-input" id="swapFromAmt" type="number" placeholder="0.00" oninput="updateSwapPreview()">
+              <div class="swap-token-btn" onclick="toggleSwapToken('from')">
+                <span id="swapFromSymbol">AMTS</span> ▾
+              </div>
+            </div>
+            <div class="swap-usd" id="swapFromUsd">—</div>
+          </div>
+          <div class="swap-arrow" onclick="flipSwap()">⇅</div>
+          <div class="swap-box">
+            <div class="swap-label">You Receive</div>
+            <div class="swap-input-row">
+              <input class="swap-input" id="swapToAmt" type="number" placeholder="0.00" readonly>
+              <div class="swap-token-btn" onclick="toggleSwapToken('to')">
+                <span id="swapToSymbol">NCD</span> ▾
+              </div>
+            </div>
+            <div class="swap-usd" id="swapToUsd">—</div>
+          </div>
+          <div class="swap-info" id="swapInfo" style="display:none">
+            <div class="swap-info-row"><span>Rate</span><span id="swapRate">—</span></div>
+            <div class="swap-info-row"><span>Price Impact</span><span id="swapImpact" style="color:var(--green)">—</span></div>
+            <div class="swap-info-row"><span>Fee (0.3%)</span><span id="swapFee">—</span></div>
+            <div class="swap-info-row"><span>Fee Rebate (80%)</span><span id="swapRebate" style="color:var(--green)">—</span></div>
+            <div class="swap-info-row"><span>Net Fee</span><span id="swapNetFee" style="color:var(--gold)">—</span></div>
+          </div>
+          <button class="btn btn-gold btn-full" style="margin-top:10px" onclick="executeSwap()">
+            Swap
+          </button>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:16px">
+            <div class="section-label" style="margin-bottom:12px">Flash Loan Facility</div>
+            <div class="oracle-row">
+              <div><div class="oracle-name">Available</div></div>
+              <div></div><div></div>
+              <div class="oracle-val">21,000,000 AMTS</div>
+            </div>
+            <div class="oracle-row">
+              <div><div class="oracle-name">Fee Rate</div></div>
+              <div></div><div></div>
+              <div class="oracle-val" style="color:var(--green)">0.05%</div>
+            </div>
+            <div class="oracle-row">
+              <div><div class="oracle-name">vs Aave</div></div>
+              <div></div><div></div>
+              <div class="oracle-val" style="color:var(--green)">50% cheaper</div>
+            </div>
+            <button class="btn btn-outline btn-sm btn-full" style="margin-top:14px">
+              Flash Loan →
+            </button>
+          </div>
+          <div class="card">
+            <div class="section-label" style="margin-bottom:12px">AMTS / NCD Pool</div>
+            <div class="oracle-row">
+              <div><div class="oracle-name">Total Liquidity</div></div>
+              <div></div><div></div>
+              <div class="oracle-val" style="color:var(--gold)">$200,000,000</div>
+            </div>
+            <div class="oracle-row">
+              <div><div class="oracle-name">AMTS Price</div></div>
+              <div></div><div></div>
+              <div class="oracle-val">$7.50</div>
+            </div>
+            <div class="oracle-row">
+              <div><div class="oracle-name">24h Volume</div></div>
+              <div></div><div></div>
+              <div class="oracle-val" id="poolVolume">Loading…</div>
+            </div>
+            <div class="oracle-row">
+              <div><div class="oracle-name">Fee APR</div></div>
+              <div></div><div></div>
+              <div class="oracle-val" style="color:var(--green)">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAGE: POOLS ── -->
+    <div class="page" id="page-pools">
+      <div class="section-hdr" style="margin-bottom:20px">
+        <div>
+          <div class="section-label">Native DEX</div>
+          <div class="section-title" style="font-size:24px">Liquidity Pools</div>
+        </div>
+        <button class="btn btn-gold btn-sm">+ Add Liquidity</button>
+      </div>
+      <div class="grid-2">
+        <div class="pool-card">
+          <div class="pool-pair">
+            <div class="pool-token" style="background:var(--gdim);border:1px solid var(--gbdr);color:var(--gold)">A</div>
+            <div class="pool-token" style="background:var(--bldim);border:1px solid rgba(91,140,245,0.24);color:var(--blue)">N</div>
+          </div>
+          <div class="pool-name">AMTS / NCD-001</div>
+          <div class="pool-meta">0.3% fee · Dual Oracle · Sovereign Backed</div>
+          <span class="oracle-badge dual" style="margin-top:8px;display:inline-flex">⬡ Flagship Pool</span>
+          <div class="pool-stats">
+            <div>
+              <div class="pool-stat-label">TVL</div>
+              <div class="pool-stat-val" style="color:var(--gold)">$200M</div>
+            </div>
+            <div>
+              <div class="pool-stat-label">24h Vol</div>
+              <div class="pool-stat-val">—</div>
+            </div>
+            <div>
+              <div class="pool-stat-label">Fee APR</div>
+              <div class="pool-stat-val" style="color:var(--green)">—</div>
+            </div>
+            <div>
+              <div class="pool-stat-label">Your LP</div>
+              <div class="pool-stat-val">—</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:14px">
+            <button class="btn btn-gold btn-sm">Add</button>
+            <button class="btn btn-outline btn-sm">Remove</button>
+          </div>
+        </div>
+        <div class="pool-card" style="opacity:0.5;cursor:default;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:8px;min-height:200px">
+          <div style="font-size:24px">+</div>
+          <div style="font-size:13px;color:var(--muted)">More pools coming</div>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--dimmer)">AMTS/OSMO via IBC · AMTS/ATOM · AMTS/USDC</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAGE: ORACLE ── -->
+    <div class="page" id="page-oracle">
+      <div class="section-hdr" style="margin-bottom:20px">
+        <div>
+          <div class="section-label">Dual Attestation Network</div>
+          <div class="section-title" style="font-size:24px">Oracle Status</div>
+        </div>
+        <span class="oracle-badge confirmed">● All Systems Normal</span>
+      </div>
+
+      <div class="grid-2" style="margin-bottom:24px">
+        <div class="card card-lg">
+          <div class="section-label" style="margin-bottom:14px">Chainlink PoR — External</div>
+          <div class="oracle-row">
+            <div><div class="oracle-name">NCD-001 Balance</div><div class="oracle-sub">Sovereign Reserve · Tier-1 Bank</div></div>
+            <div class="oracle-val">$100,000,000</div>
+            <div class="oracle-time">14:22 UTC</div>
+            <span class="oracle-badge confirmed">✓</span>
+          </div>
+          <div class="oracle-row">
+            <div><div class="oracle-name">AMTS / NCD Price</div><div class="oracle-sub">DEX reference feed</div></div>
+            <div class="oracle-val">$7.50</div>
+            <div class="oracle-time">live</div>
+            <span class="oracle-badge confirmed">✓</span>
+          </div>
+          <div class="oracle-row">
+            <div><div class="oracle-name">Next Confirmation</div><div class="oracle-sub">Weekly cycle</div></div>
+            <div class="oracle-val">6d 21h</div>
+            <div class="oracle-time">scheduled</div>
+            <span class="oracle-badge pending">⏳</span>
+          </div>
+        </div>
+
+        <div class="card card-lg">
+          <div class="section-label" style="margin-bottom:14px">Amitis Validators — Native</div>
+          <div class="oracle-row">
+            <div><div class="oracle-name">NCD-001 Balance</div><div class="oracle-sub">18/21 validators confirmed</div></div>
+            <div class="oracle-val">$100,000,000</div>
+            <div class="oracle-time">14:23 UTC</div>
+            <span class="oracle-badge confirmed">✓</span>
+          </div>
+          <div class="oracle-row">
+            <div><div class="oracle-name">Consensus Threshold</div><div class="oracle-sub">⅔ required · 14 minimum</div></div>
+            <div class="oracle-val">18 / 21</div>
+            <div class="oracle-time">met</div>
+            <span class="oracle-badge confirmed">✓</span>
+          </div>
+          <div class="oracle-row">
+            <div><div class="oracle-name">Dissenting Validators</div><div class="oracle-sub">Slashing not triggered</div></div>
+            <div class="oracle-val">0</div>
+            <div class="oracle-time">all-time</div>
+            <span class="oracle-badge confirmed">✓</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card card-lg">
+        <div class="section-hdr">
+          <div>
+            <div class="section-label">Attestation History</div>
+            <div class="section-title">NCD-001 Dual Confirmation Log</div>
+          </div>
+          <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--green)">0 discrepancies all-time</span>
+        </div>
+        <div style="margin-top:16px">
+          <div class="oracle-row">
+            <div><div class="oracle-name">2026-05-30 14:22 UTC</div><div class="oracle-sub">Weekly cycle #1</div></div>
+            <div class="oracle-val">$100,000,000</div>
+            <div class="oracle-time">Block #847,293</div>
+            <span class="oracle-badge dual">⬡ Dual</span>
+          </div>
+          <div class="oracle-row">
+            <div><div class="oracle-name">2026-05-23 14:18 UTC</div><div class="oracle-sub">Genesis confirmation</div></div>
+            <div class="oracle-val">$100,000,000</div>
+            <div class="oracle-time">Block #741,102</div>
+            <span class="oracle-badge dual">⬡ Dual</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAGE: GOVERNANCE ── -->
+    <div class="page" id="page-governance">
+      <div class="section-hdr" style="margin-bottom:20px">
+        <div>
+          <div class="section-label">On-Chain Governance</div>
+          <div class="section-title" style="font-size:24px">Proposals</div>
+        </div>
+        <button class="btn btn-gold btn-sm">+ Submit Proposal</button>
+      </div>
+
+      <div id="proposalList">
+        <div class="prop-card">
+          <div class="prop-header">
+            <div>
+              <div class="prop-id">PROP-003</div>
+              <div class="prop-title">Tokenize Sovereign Reserve NCD-001 and Seed AMTS/NCD Pool</div>
+              <div class="prop-desc">Approve tokenization of $100M sovereign NCD on Amitis. Allocate 13,333,333 AMTS from liquidity reserve to seed the primary AMTS/NCD pool at $7.50. Yield donated to community pool.</div>
+            </div>
+            <span class="prop-status voting">Voting</span>
+          </div>
+          <div class="vote-bar">
+            <div class="vote-yes" style="width:72%"></div>
+            <div class="vote-no" style="width:8%"></div>
+            <div class="vote-abs" style="width:20%"></div>
+          </div>
+          <div class="vote-labels">
+            <span style="color:var(--green)">Yes 72%</span>
+            <span>Ends in 18h 42m</span>
+            <span style="color:var(--red)">No 8%</span>
+          </div>
+          <div class="vote-btns">
+            <button class="btn btn-green btn-sm">Vote Yes</button>
+            <button class="btn btn-red btn-sm">Vote No</button>
+            <button class="btn btn-outline btn-sm">Abstain</button>
+            <span style="margin-left:auto;font-family:'DM Mono',monospace;font-size:10px;color:var(--dimmer);align-self:center">Voting power: — AMTS</span>
+          </div>
+        </div>
+
+        <div class="prop-card">
+          <div class="prop-header">
+            <div>
+              <div class="prop-id">PROP-002</div>
+              <div class="prop-title">Fund Fiat Service Provider — Q2 2026 Operating Budget</div>
+              <div class="prop-desc">Allocate 2,500 USDC from community pool to multisig for Q2 fiat operational expenses. Domain registrations, legal correspondence, infrastructure incidentals.</div>
+            </div>
+            <span class="prop-status passed">Passed</span>
+          </div>
+          <div class="vote-bar">
+            <div class="vote-yes" style="width:94%"></div>
+            <div class="vote-no" style="width:2%"></div>
+            <div class="vote-abs" style="width:4%"></div>
+          </div>
+          <div class="vote-labels">
+            <span style="color:var(--green)">Yes 94%</span>
+            <span>Passed — Block #741,102</span>
+            <span style="color:var(--red)">No 2%</span>
+          </div>
+        </div>
+
+        <div class="prop-card">
+          <div class="prop-header">
+            <div>
+              <div class="prop-id">PROP-001</div>
+              <div class="prop-title">Genesis Parameter Ratification — Amitis Network</div>
+              <div class="prop-desc">Ratify genesis parameters including 80% fee rebate, 21 fixed validator set, community pool allocation rate, and initial governance parameters.</div>
+            </div>
+            <span class="prop-status passed">Passed</span>
+          </div>
+          <div class="vote-bar">
+            <div class="vote-yes" style="width:100%"></div>
+          </div>
+          <div class="vote-labels">
+            <span style="color:var(--green)">Yes 100%</span>
+            <span>Passed — Genesis</span>
+            <span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAGE: VALIDATORS ── -->
+    <div class="page" id="page-validators">
+      <div class="section-hdr" style="margin-bottom:20px">
+        <div>
+          <div class="section-label">Consensus Layer</div>
+          <div class="section-title" style="font-size:24px">Validator Petals</div>
+        </div>
+        <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--green)">7 / 21 Active</span>
+      </div>
+
+      <div class="validator-grid" id="validatorGrid"></div>
+
+      <div class="grid-2">
+        <div class="card card-lg">
+          <div class="section-label" style="margin-bottom:14px">Network Revenue</div>
+          <div class="oracle-row">
+            <div><div class="oracle-name">Total Fee Revenue (24h)</div></div>
+            <div></div><div></div>
+            <div class="oracle-val" id="val-fees">Loading…</div>
+          </div>
+          <div class="oracle-row">
+            <div><div class="oracle-name">Per Validator (24h)</div></div>
+            <div></div><div></div>
+            <div class="oracle-val" id="val-per">—</div>
+          </div>
+          <div class="oracle-row">
+            <div><div class="oracle-name">Flash Loan Revenue (24h)</div></div>
+            <div></div><div></div>
+            <div class="oracle-val">—</div>
+          </div>
+          <div class="oracle-row">
+            <div><div class="oracle-name">Community Pool Balance</div></div>
+            <div></div><div></div>
+            <div class="oracle-val" style="color:var(--gold)" id="val-pool">Loading…</div>
+          </div>
+        </div>
+        <div class="card card-lg">
+          <div class="section-label" style="margin-bottom:14px">VPT Economics</div>
+          <div class="oracle-row">
+            <div><div class="oracle-name">Implied AMTS Price</div></div>
+            <div></div><div></div>
+            <div class="oracle-val" style="color:var(--gold)">$7.50</div>
+          </div>
+          <div class="oracle-row">
+            <div><div class="oracle-name">Validator Staked</div></div>
+            <div></div><div></div>
+            <div class="oracle-val">1,000,000 AMTS each</div>
+          </div>
+          <div class="oracle-row">
+            <div><div class="oracle-name">Revenue Share</div></div>
+            <div></div><div></div>
+            <div class="oracle-val">1/21 of all fees</div>
+          </div>
+          <div class="oracle-row">
+            <div><div class="oracle-name">VPT Transfer</div></div>
+            <div></div><div></div>
+            <div class="oracle-val">On-chain · Tradeable</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAGE: SETTINGS ── -->
+    <div class="page" id="page-settings">
+      <div class="section-label" style="margin-bottom:8px">Wallet</div>
+      <div class="section-title" style="font-size:24px;margin-bottom:24px">Settings</div>
+      <div class="card card-lg" style="max-width:500px">
+        <div class="section-label" style="margin-bottom:16px">Connection</div>
+        <div id="settingsConnected" style="display:none">
+          <div class="oracle-row">
+            <div><div class="oracle-name">Address</div></div>
+            <div></div><div></div>
+            <div class="oracle-val" id="settings-addr" style="font-size:11px">—</div>
+          </div>
+          <div class="oracle-row">
+            <div><div class="oracle-name">AMTS Balance</div></div>
+            <div></div><div></div>
+            <div class="oracle-val" id="settings-bal">—</div>
+          </div>
+          <div style="margin-top:16px">
+            <button class="btn btn-outline btn-sm" onclick="disconnect()">Disconnect Wallet</button>
+          </div>
+        </div>
+        <div id="settingsDisconnected">
+          <div style="color:var(--muted);font-size:13px;margin-bottom:16px">No wallet connected.</div>
+          <button class="btn btn-gold btn-sm" onclick="handleConnect()">Connect Keplr</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+</div><!-- /shell -->
+
+<!-- ── CONNECT MODAL ── -->
+<div class="modal-overlay" id="connectModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title">Connect to Amitis</div>
+    <p class="modal-sub">Add the Amitis Network to your Keplr wallet and connect to view your portfolio, trade assets, and participate in governance.</p>
+    <div class="modal-chain-info">
+      <div class="modal-row"><span class="modal-row-label">Chain ID</span><span class="modal-row-val">amitis-network</span></div>
+      <div class="modal-row"><span class="modal-row-label">Token</span><span class="modal-row-val">AMTS (uamts)</span></div>
+      <div class="modal-row"><span class="modal-row-label">RPC</span><span class="modal-row-val">rpc.amitis.network</span></div>
+      <div class="modal-row"><span class="modal-row-label">REST</span><span class="modal-row-val">rest.amitis.network</span></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-gold" onclick="connectWallet()" style="flex:1">Connect Keplr</button>
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+    </div>
+    <div class="modal-status" id="modalStatus"></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ── CONFIG ──────────────────────────────────────────────────────────────────
+
+const CHAIN_ID = 'amitis-network';
+const RPC  = 'https://rpc.amitis.network';
+const REST = 'https://rest.amitis.network';
+const AMTS_PRICE = 7.50;
+
+const CHAIN_CONFIG = {
+  chainId: CHAIN_ID,
+  chainName: 'Amitis Network',
+  rpc: RPC,
+  rest: REST,
+  bip44: { coinType: 118 },
+  bech32Config: {
+    bech32PrefixAccAddr: 'amitis',
+    bech32PrefixAccPub: 'amitispub',
+    bech32PrefixValAddr: 'amitisvaloper',
+    bech32PrefixValPub: 'amitisvaloperpub',
+    bech32PrefixConsAddr: 'amitisvalcons',
+    bech32PrefixConsPub: 'amitisvalconspub'
+  },
+  currencies: [{ coinDenom: 'AMTS', coinMinimalDenom: 'uamts', coinDecimals: 6 }],
+  feeCurrencies: [{
+    coinDenom: 'AMTS', coinMinimalDenom: 'uamts', coinDecimals: 6,
+    gasPriceStep: { low: 0.01, average: 0.025, high: 0.04 }
+  }],
+  stakeCurrency: { coinDenom: 'AMTS', coinMinimalDenom: 'uamts', coinDecimals: 6 },
+  features: ['ibc-transfer', 'cosmwasm']
+};
+
+// ── STATE ───────────────────────────────────────────────────────────────────
+
+let address = null;
+let amtsBalance = 0;
+let currentPage = 'portfolio';
+
+// ── NAVIGATION ──────────────────────────────────────────────────────────────
+
+const pageTitles = {
+  portfolio: 'Portfolio Overview',
+  rwa: 'RWA Assets',
+  swap: 'Swap',
+  pools: 'Liquidity Pools',
+  oracle: 'Oracle Status',
+  governance: 'Governance',
+  validators: 'Validators',
+  settings: 'Settings'
+};
+
+function setPage(page, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.rail-btn').forEach(b => b.classList.remove('active'));
+
+  const pageEl = document.getElementById('page-' + page);
+  if (pageEl) pageEl.classList.add('active');
+
+  if (el) el.classList.add('active');
+  const railBtn = document.getElementById('rail-' + page);
+  if (railBtn) railBtn.classList.add('active');
+
+  document.getElementById('pageTitle').textContent = pageTitles[page] || page;
+  currentPage = page;
+
+  if (page === 'validators') buildValidatorGrid();
+  if (page === 'portfolio') loadNetworkStats();
+}
+
+// ── WALLET ──────────────────────────────────────────────────────────────────
+
+function handleConnect() {
+  if (address) {
+    navigator.clipboard.writeText(address).catch(() => {});
+    return;
+  }
+  openModal();
+}
+
+function openModal() {
+  document.getElementById('connectModal').classList.add('open');
+  document.getElementById('modalStatus').textContent = '';
+}
+
+function closeModal() {
+  document.getElementById('connectModal').classList.remove('open');
+}
+
+document.getElementById('connectModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('connectModal')) closeModal();
+});
+
+async function connectWallet() {
+  const status = document.getElementById('modalStatus');
+  if (!window.keplr) {
+    status.style.color = 'var(--red)';
+    status.textContent = 'Keplr not detected. Please install the Keplr extension.';
+    return;
+  }
+  try {
+    status.style.color = 'var(--dimmer)';
+    status.textContent = 'Connecting…';
+    await window.keplr.experimentalSuggestChain(CHAIN_CONFIG);
+    await window.keplr.enable(CHAIN_ID);
+    const signer = window.keplr.getOfflineSigner(CHAIN_ID);
+    const accounts = await signer.getAccounts();
+    if (!accounts.length) throw new Error('No accounts found.');
+    address = accounts[0].address;
+    status.style.color = 'var(--green)';
+    status.textContent = '✓ Connected';
+    await onConnected();
+    setTimeout(closeModal, 900);
+  } catch(e) {
+    status.style.color = 'var(--red)';
+    status.textContent = e.message?.includes('rejected') ? 'Request rejected in Keplr.' : (e.message || 'Connection failed.');
+  }
+}
+
+async function onConnected() {
+  const bal = await fetchBalance(address);
+  amtsBalance = bal;
+  updateWalletUI();
+  await loadBalances();
+  await loadTxHistory();
+  loadNetworkStats();
+}
+
+function updateWalletUI() {
+  const short = address ? address.slice(0,12) + '…' + address.slice(-6) : '';
+  const fmtBal = amtsBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+  const usd = (amtsBalance * AMTS_PRICE).toLocaleString(undefined, { style: 'currency', currency: 'USD' });
+
+  document.getElementById('walletDot').classList.toggle('disconnected', !address);
+  document.getElementById('walletLabel').textContent = address ? 'Connected' : 'Not Connected';
+  document.getElementById('walletAddr').textContent = address ? short : 'Connect your Keplr wallet';
+  document.getElementById('walletBal').textContent = address ? fmtBal + ' AMTS' : '—';
+  document.getElementById('walletBalUsd').textContent = address ? '≈ ' + usd : 'AMTS Balance';
+
+  const topBtn = document.getElementById('topConnectBtn');
+  topBtn.textContent = address ? short : 'Connect Wallet';
+  topBtn.classList.toggle('primary', !!address);
+
+  // stats
+  document.getElementById('stat-amts').textContent = address ? fmtBal : '—';
+  document.getElementById('stat-total').textContent = address ? usd : '$—';
+  document.getElementById('stat-change').textContent = address ? '@ $7.50 / AMTS' : 'Connect wallet to view';
+
+  // settings
+  document.getElementById('settingsConnected').style.display = address ? 'block' : 'none';
+  document.getElementById('settingsDisconnected').style.display = address ? 'none' : 'block';
+  document.getElementById('settings-addr').textContent = address || '—';
+  document.getElementById('settings-bal').textContent = address ? fmtBal + ' AMTS' : '—';
+}
+
+function disconnect() {
+  address = null;
+  amtsBalance = 0;
+  updateWalletUI();
+  clearBalances();
+}
+
+// ── BALANCE FETCH ────────────────────────────────────────────────────────────
+
+async function fetchBalance(addr) {
+  try {
+    const res = await fetch(`${REST}/cosmos/bank/v1beta1/balances/${addr}`);
+    if (!res.ok) return 0;
+    const data = await res.json();
+    const uamts = (data.balances || []).find(b => b.denom === 'uamts');
+    return uamts ? parseInt(uamts.amount) / 1_000_000 : 0;
+  } catch { return 0; }
+}
+
+async function loadBalances() {
+  if (!address) return;
+  try {
+    const res = await fetch(`${REST}/cosmos/bank/v1beta1/balances/${address}`);
+    const data = await res.json();
+    const bals = data.balances || [];
+    const get = denom => {
+      const b = bals.find(b => b.denom === denom);
+      return b ? parseInt(b.amount) / 1_000_000 : 0;
+    };
+    const amts = get('uamts');
+    amtsBalance = amts;
+    const fmt = (n, d = 4) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: d });
+    document.getElementById('tok-amts').textContent = fmt(amts) + ' AMTS';
+    document.getElementById('tok-amts-usd').textContent = '≈ $' + fmt(amts * AMTS_PRICE, 2);
+    document.getElementById('tok-ncd').textContent = '—';
+    document.getElementById('tok-ncd-usd').textContent = 'NCD-001';
+    document.getElementById('tok-osmo').textContent = '—';
+    document.getElementById('tok-atom').textContent = '—';
+    document.getElementById('stat-amts').textContent = fmt(amts) + ' AMTS';
+    document.getElementById('stat-total').textContent = '$' + fmt(amts * AMTS_PRICE, 2);
+    updateWalletUI();
+  } catch {}
+}
+
+function clearBalances() {
+  ['tok-amts','tok-ncd','tok-osmo','tok-atom'].forEach(id => {
+    document.getElementById(id).textContent = '—';
+  });
+  ['tok-amts-usd','tok-ncd-usd'].forEach(id => {
+    document.getElementById(id).textContent = '—';
+  });
+}
+
+// ── TX HISTORY ───────────────────────────────────────────────────────────────
+
+async function loadTxHistory() {
+  if (!address) return;
+  const container = document.getElementById('txList');
+  container.innerHTML = '<div style="text-align:center;padding:24px 0"><div class="loading"></div></div>';
+  try {
+    const res = await fetch(`${REST}/cosmos/tx/v1beta1/txs?events=message.sender=%27${address}%27&limit=5`);
+    const data = await res.json();
+    const txs = data.tx_responses || [];
+    if (!txs.length) {
+      container.innerHTML = '<div style="text-align:center;padding:32px 0;color:var(--dimmer);font-size:13px;">No transactions yet</div>';
+      return;
+    }
+    container.innerHTML = txs.map(tx => {
+      const hash = tx.txhash?.slice(0,8) + '…' + tx.txhash?.slice(-6);
+      const time = tx.timestamp ? new Date(tx.timestamp).toLocaleDateString() : '—';
+      const type = tx.tx?.body?.messages?.[0]?.['@type'] || '';
+      const icon = type.includes('Send') ? 'send' : type.includes('Swap') ? 'swap' : type.includes('Delegate') ? 'stake' : 'recv';
+      const iconChar = icon === 'send' ? '↑' : icon === 'swap' ? '⇌' : icon === 'stake' ? '⚡' : '↓';
+      const label = type.split('.').pop()?.replace('Msg','') || 'Transaction';
+      return `<div class="tx-row">
+        <div class="tx-icon ${icon}">${iconChar}</div>
+        <div><div class="tx-desc">${label}</div><div class="tx-hash">${hash}</div></div>
+        <div class="tx-time">${time}</div>
+        <div class="tx-amount">${tx.code === 0 ? '<span style="color:var(--green)">✓</span>' : '<span style="color:var(--red)">✗</span>'}</div>
+      </div>`;
+    }).join('');
+  } catch {
+    container.innerHTML = '<div style="text-align:center;padding:24px 0;color:var(--dimmer);font-size:12px;">Could not load transactions</div>';
+  }
+}
+
+// ── NETWORK STATS ────────────────────────────────────────────────────────────
+
+async function loadNetworkStats() {
+  try {
+    const res = await fetch(`${RPC}/status`);
+    const data = await res.json();
+    const height = data.result?.sync_info?.latest_block_height;
+    if (height) {
+      document.getElementById('blockHeight').textContent = 'Block ' + parseInt(height).toLocaleString();
+      document.getElementById('net-block').textContent = parseInt(height).toLocaleString();
+    }
+  } catch {}
+
+  try {
+    const res = await fetch(`${REST}/cosmos/staking/v1beta1/validators?status=BOND_STATUS_BONDED&pagination.limit=25`);
+    const data = await res.json();
+    const count = data.validators?.length || 0;
+    document.getElementById('net-validators').textContent = count;
+    document.getElementById('val-fees').textContent = '—';
+    document.getElementById('val-pool').textContent = 'Loading…';
+  } catch {}
+
+  try {
+    const res = await fetch(`${REST}/cosmos/distribution/v1beta1/community_pool`);
+    const data = await res.json();
+    const pool = data.pool || [];
+    const uamts = pool.find(c => c.denom === 'uamts');
+    if (uamts) {
+      const amts = (parseFloat(uamts.amount) / 1_000_000).toLocaleString(undefined, {maximumFractionDigits: 0});
+      document.getElementById('val-pool').textContent = amts + ' AMTS';
+    }
+  } catch {}
+}
+
+// ── VALIDATORS ───────────────────────────────────────────────────────────────
+
+function buildValidatorGrid() {
+  const grid = document.getElementById('validatorGrid');
+  grid.innerHTML = '';
+  for (let i = 1; i <= 21; i++) {
+    const active = i <= 7;
+    const sovereign = i === 1;
+    const div = document.createElement('div');
+    div.className = 'validator-petal' + (active ? ' active' : '') + (sovereign ? ' sovereign' : '');
+    div.innerHTML = `
+      <div class="petal-num">${i}</div>
+      <div class="petal-dot ${active ? 'online' : 'offline'}"></div>
+      <div class="petal-label">${sovereign ? 'SOVEREIGN' : active ? 'ACTIVE' : 'AVAILABLE'}</div>
+    `;
+    div.title = `Validator Petal #${i}${sovereign ? ' — Sovereign Entity' : ''}`;
+    grid.appendChild(div);
+  }
+}
+
+// ── SWAP ─────────────────────────────────────────────────────────────────────
+
+const swapPairs = {
+  'AMTS→NCD':  { rate: 7.50,  impact: 0.02 },
+  'NCD→AMTS':  { rate: 0.133, impact: 0.02 },
+};
+let swapFrom = 'AMTS';
+let swapTo   = 'NCD';
+
+function updateSwapPreview() {
+  const amt = parseFloat(document.getElementById('swapFromAmt').value) || 0;
+  const key = swapFrom + '→' + swapTo;
+  const pair = swapPairs[key];
+  if (!pair || !amt) {
+    document.getElementById('swapToAmt').value = '';
+    document.getElementById('swapInfo').style.display = 'none';
+    return;
+  }
+  const out = amt * pair.rate;
+  document.getElementById('swapToAmt').value = out.toFixed(6);
+  document.getElementById('swapFromUsd').textContent = swapFrom === 'AMTS' ? '≈ $' + (amt * 7.50).toFixed(2) : '≈ $' + amt.toFixed(2);
+  document.getElementById('swapToUsd').textContent   = swapTo   === 'AMTS' ? '≈ $' + (out * 7.50).toFixed(2) : '≈ $' + out.toFixed(2);
+  const fee = amt * 0.003;
+  const rebate = fee * 0.8;
+  const netFee = fee * 0.2;
+  document.getElementById('swapRate').textContent    = `1 ${swapFrom} = ${pair.rate} ${swapTo}`;
+  document.getElementById('swapImpact').textContent  = pair.impact.toFixed(2) + '%';
+  document.getElementById('swapFee').textContent     = fee.toFixed(4) + ' ' + swapFrom;
+  document.getElementById('swapRebate').textContent  = '+' + rebate.toFixed(4) + ' ' + swapFrom;
+  document.getElementById('swapNetFee').textContent  = netFee.toFixed(4) + ' ' + swapFrom;
+  document.getElementById('swapInfo').style.display  = 'flex';
+}
+
+function flipSwap() {
+  [swapFrom, swapTo] = [swapTo, swapFrom];
+  document.getElementById('swapFromSymbol').textContent = swapFrom;
+  document.getElementById('swapToSymbol').textContent   = swapTo;
+  document.getElementById('swapFromAmt').value = '';
+  document.getElementById('swapToAmt').value   = '';
+  document.getElementById('swapInfo').style.display = 'none';
+}
+
+function executeSwap() {
+  if (!address) { openModal(); return; }
+  const amt = document.getElementById('swapFromAmt').value;
+  if (!amt || parseFloat(amt) <= 0) return;
+  alert('Swap execution coming soon — CosmWasm DEX contract integration in progress.');
+}
+
+// ── RWA ──────────────────────────────────────────────────────────────────────
+
+function showRWADetail() {
+  const el = document.getElementById('rwaDetail');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+// ── REFRESH ───────────────────────────────────────────────────────────────────
+
+function refreshAll() {
+  loadNetworkStats();
+  if (address) {
+    loadBalances();
+    loadTxHistory();
+  }
+}
+
+// ── AUTO CONNECT ──────────────────────────────────────────────────────────────
+
+window.addEventListener('load', async () => {
+  loadNetworkStats();
+  buildValidatorGrid();
+  if (!window.keplr) return;
+  try {
+    await window.keplr.enable(CHAIN_ID);
+    const signer = window.keplr.getOfflineSigner(CHAIN_ID);
+    const accounts = await signer.getAccounts();
+    if (accounts?.length) {
+      address = accounts[0].address;
+      await onConnected();
+    }
+  } catch {}
+});
+
+window.addEventListener('keplr_keystorechange', async () => {
+  if (!window.keplr || !address) return;
+  try {
+    const signer = window.keplr.getOfflineSigner(CHAIN_ID);
+    const accounts = await signer.getAccounts();
+    if (accounts?.length) {
+      address = accounts[0].address;
+      await onConnected();
+    }
+  } catch {}
+});
+
+// Poll block height every 6s
+setInterval(loadNetworkStats, 6000);
+</script>
+</body>
+</html>

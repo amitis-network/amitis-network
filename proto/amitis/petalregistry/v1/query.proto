@@ -1,0 +1,53 @@
+syntax = "proto3";
+package amitis.petalregistry.v1;
+
+import "google/api/annotations.proto";
+import "amitis/petalregistry/v1/petal.proto";
+
+option go_package = "github.com/amitis-network/amitis-network/x/petalregistry/types";
+
+// Query defines the gRPC querier service
+service Query {
+  // Petal queries a petal by ID
+  rpc Petal(QueryPetalRequest) returns (QueryPetalResponse) {
+    option (google.api.http).get = "/amitis/petalregistry/v1/petal/{id}";
+  }
+
+  // Petals queries all petals
+  rpc Petals(QueryPetalsRequest) returns (QueryPetalsResponse) {
+    option (google.api.http).get = "/amitis/petalregistry/v1/petals";
+  }
+
+  // PetalsByOwner queries petals owned by an address
+  rpc PetalsByOwner(QueryPetalsByOwnerRequest) returns (QueryPetalsByOwnerResponse) {
+    option (google.api.http).get = "/amitis/petalregistry/v1/petals/owner/{owner}";
+  }
+}
+
+// QueryPetalRequest is request type for the Query/Petal RPC method
+message QueryPetalRequest {
+  uint64 id = 1;
+}
+
+// QueryPetalResponse is response type for the Query/Petal RPC method
+message QueryPetalResponse {
+  Petal petal = 1;
+}
+
+// QueryPetalsRequest is request type for the Query/Petals RPC method
+message QueryPetalsRequest {}
+
+// QueryPetalsResponse is response type for the Query/Petals RPC method
+message QueryPetalsResponse {
+  repeated Petal petals = 1;
+}
+
+// QueryPetalsByOwnerRequest is request type for the Query/PetalsByOwner RPC method
+message QueryPetalsByOwnerRequest {
+  string owner = 1;
+}
+
+// QueryPetalsByOwnerResponse is response type for the Query/PetalsByOwner RPC method
+message QueryPetalsByOwnerResponse {
+  repeated Petal petals = 1;
+}

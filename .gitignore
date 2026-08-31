@@ -1,0 +1,30 @@
+# Build artifacts
+contracts/*/target/
+artifacts/*.wasm
+build/
+*.test
+
+# Internal scripts — not for public consumption
+scripts/amitis_stress.py
+scripts/faucet.py
+scripts/amitis-stress.service
+backend/
+
+# Internal session documents
+docs/HANDOFF_SESSION_*.md
+
+# Backup files
+simd/cmd/commands.go.backup-manual-cli
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+vendor/

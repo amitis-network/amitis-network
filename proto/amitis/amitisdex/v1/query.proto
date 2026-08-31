@@ -1,0 +1,28 @@
+syntax = "proto3";
+package amitis.amitisdex.v1;
+
+import "google/api/annotations.proto";
+import "amitis/amitisdex/v1/types.proto";
+
+option go_package = "github.com/amitis-network/amitis-network/x/amitisdex/types";
+
+service Query {
+  rpc Pools(QueryPoolsRequest) returns (QueryPoolsResponse) {
+    option (google.api.http).get = "/amitis/amitisdex/v1/pools";
+  }
+  rpc Pool(QueryPoolRequest) returns (QueryPoolResponse) {
+    option (google.api.http).get = "/amitis/amitisdex/v1/pools/{id}";
+  }
+  rpc Positions(QueryPositionsRequest) returns (QueryPositionsResponse) {
+    option (google.api.http).get = "/amitis/amitisdex/v1/positions/{address}";
+  }
+}
+
+message QueryPoolsRequest {}
+message QueryPoolsResponse { repeated Pool pools = 1; }
+
+message QueryPoolRequest  { uint64 id = 1; }
+message QueryPoolResponse { Pool pool = 1; }
+
+message QueryPositionsRequest  { string address = 1; }
+message QueryPositionsResponse { repeated LiquidityPosition positions = 1; }

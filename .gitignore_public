@@ -1,0 +1,24 @@
+# Build artifacts
+contracts/*/target/
+artifacts/*.wasm
+
+# Internal scripts
+scripts/amitis_stress.py
+scripts/faucet.py
+scripts/amitis-stress.service
+backend/faucet.py
+
+# Internal session docs
+docs/HANDOFF_SESSION_*.md
+
+# Backup files
+simd/cmd/commands.go.backup-manual-cli
+
+# Go build cache
+*.test
+build/
+
+# Environment files
+.env
+.env.*
+!.env.example

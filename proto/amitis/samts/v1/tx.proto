@@ -1,0 +1,25 @@
+syntax = "proto3";
+package amitis.samts.v1;
+
+import "cosmos/msg/v1/msg.proto";
+
+option go_package = "github.com/amitis-network/amitis-network/x/samts/types";
+
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // FlashLoan borrows from the pooled sAMTS facility and must repay in same TX
+  rpc FlashLoan(MsgFlashLoan) returns (MsgFlashLoanResponse);
+}
+
+message MsgFlashLoan {
+  option (cosmos.msg.v1.signer) = "borrower";
+  string borrower = 1;
+  string amount   = 2;
+  string denom    = 3;
+}
+
+message MsgFlashLoanResponse {
+  string amount_borrowed = 1;
+  string fee             = 2;
+}
